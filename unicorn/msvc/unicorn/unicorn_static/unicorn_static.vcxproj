@@ -277,7 +277,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aarch64-softmmu.lib;aarch64eb-softmmu.lib;arm-softmmu.lib;armeb-softmmu.lib;m68k-softmmu.lib;mips-softmmu.lib;mips64-softmmu.lib;mipsel-softmmu.lib;mips64el-softmmu.lib;sparc-softmmu.lib;sparc64-softmmu.lib;x86_64-softmmu.lib</AdditionalDependencies>
+      <AdditionalDependencies>x86_64-softmmu.lib</AdditionalDependencies>
     </Lib>
     <PreBuildEvent>
       <Command>..\prebuild_script.bat</Command>
@@ -346,7 +346,7 @@ copy $(SolutionDir)..\include\unicorn\*.h $(SolutionDir)distro\include\unicorn\
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>aarch64-softmmu.lib;aarch64eb-softmmu.lib;arm-softmmu.lib;armeb-softmmu.lib;m68k-softmmu.lib;mips-softmmu.lib;mips64-softmmu.lib;mipsel-softmmu.lib;mips64el-softmmu.lib;sparc-softmmu.lib;sparc64-softmmu.lib;x86_64-softmmu.lib</AdditionalDependencies>
+      <AdditionalDependencies>x86_64-softmmu.lib</AdditionalDependencies>
     </Lib>
     <PreBuildEvent>
       <Command>..\prebuild_script.bat</Command>

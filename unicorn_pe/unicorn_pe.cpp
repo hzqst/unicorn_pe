@@ -1292,6 +1292,11 @@ int main(int argc, char **argv)
 	}
 
 	cs_err err2 = cs_open(CS_ARCH_X86, ctx.m_IsWin64 ? CS_MODE_64 : CS_MODE_32, &ctx.m_cs);
+	if (err2)
+	{
+		printf("failed to cs_open %d\n", err2);
+		return 0;
+	}
 
 	ctx.m_uc = uc;
 	ctx.thisProc.Attach(GetCurrentProcessId());
