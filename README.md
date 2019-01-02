@@ -8,3 +8,9 @@ Visual Studio 2015 / 2017 are required.
 Open unicorn_pe.sln with Visual Studio 2015 / 2017
 
 Build project "unicorn_pe" as x64/Release or x64/Debug. (No x86 support for now)
+
+## Snapshots
+
+![1](https://github.com/hzqst/unicorn_pe/raw/master/img/img1.png)
+
+![2](https://github.com/hzqst/unicorn_pe/raw/master/img/img2.png)
