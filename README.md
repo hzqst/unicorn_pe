@@ -6,6 +6,8 @@ For now, only x64 PE files are supported.
 
 Some packed program might be executed incorrectly, since the environment is not fully emulated. (PEB TEB or some other stuffs)
 
+I would be grateful if you figure out how to emulate packed programs correctly.
+
 No support for exception. (x64 exception requires RtlDispatchException and InvertedTable to dispatch the expt. correctly, which is too complicated to emulate)
 
 ## Build
