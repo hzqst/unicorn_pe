@@ -71,6 +71,7 @@ class PeEmulation
 public:
 	PeEmulation()
 	{
+		m_DisplayDisasm = false;
 		m_IsKernel = false;
 		m_IsWin64 = true;
 		m_TlsValue = -1;
@@ -105,6 +106,7 @@ public:
 	uc_engine *m_uc;
 	bool m_IsWin64;
 	bool m_IsKernel;
+	bool m_DisplayDisasm;
 	uint64_t m_KSharedUserDataBase;
 	uint64_t m_KSharedUserDataEnd;
 	uint64_t m_StackBase;
@@ -1266,7 +1268,7 @@ int main(int argc, char **argv)
 
 	if (argc < 2)
 	{
-		printf("usage: unicorn_pe (filename) [-k]\n");
+		printf("usage: unicorn_pe (filename) [-k] [-disasm]\n");
 		return 0;
 	}
 
@@ -1280,7 +1282,11 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[i], "-k"))
 		{
 			ctx.m_IsKernel = true;
-		}		
+		}
+		if (!strcmp(argv[i], "-disasm"))
+		{
+			ctx.m_DisplayDisasm = true;
+		}
 	}
 
 	uc_engine *uc = NULL;
@@ -1421,10 +1427,13 @@ int main(int argc, char **argv)
 	uc_hook_add(uc, &trace2, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE | UC_HOOK_MEM_FETCH,
 		RwxCallback, &ctx, 1, 0);
 
-	uc_hook_add(uc, &trace2, UC_HOOK_CODE,
-		CodeDisasmCallback, &ctx, 1, 0);
+	if (ctx.m_DisplayDisasm)
+	{
+		uc_hook_add(uc, &trace2, UC_HOOK_CODE,
+			CodeDisasmCallback, &ctx, 1, 0);
+	}
 
-	err = uc_emu_start(uc, ctx.m_ImageEntry, ctx.m_ImageEnd, 0, 3000000);
+	err = uc_emu_start(uc, ctx.m_ImageEntry, ctx.m_ImageEnd, 0, 0);
 
 	uc_close(uc);
 
