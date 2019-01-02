@@ -11,9 +11,9 @@ I would be grateful if you figure out how to emulate packed programs correctly.
 No support for exception. (x64 exception requires RtlDispatchException and InvertedTable to dispatch the expt. correctly, which is too complicated to emulate)
 
 ## Build
-Visual Studio 2015 / 2017 are required.
+Visual Studio 2017 are required.
 
-Open unicorn_pe.sln with Visual Studio 2015 / 2017
+Open unicorn_pe.sln with Visual Studio 2017
 
 Build project "unicorn_pe" as x64/Release or x64/Debug. (No x86 support for now)
 
