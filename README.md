@@ -30,5 +30,7 @@ This software is released under the MIT License, see LICENSE.
 
 ## Dependencies 
 A modification of https://github.com/DarthTon/Blackbone is done to map PE files into memory correctly.
+
 https://github.com/unicorn-engine/unicorn for emulation.
+
 https://github.com/aquynh/capstone for disasm.
