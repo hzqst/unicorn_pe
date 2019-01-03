@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <functional>
 #include <vector>
 #include <intrin.h>
@@ -12,8 +13,12 @@
 #include "buffer.h"
 #include "encode.h"
 #include "nativestructs.h"
+#include "ucpe.h"
+#include "emuapi.h"
 
 #pragma comment(lib,"ntdll.lib")
+
+std::ostream *outs;
 
 extern "C"
 {
@@ -33,114 +38,9 @@ extern "C"
 		);
 }
 
-using api_emu_callback = std::function<bool(uc_engine *uc)>;
-
-typedef struct FakeAPI_s
-{
-	FakeAPI_s(const char *n, uint64_t va) : ProcedureName(n), VirtualAddress(va) {
-		EmuCallback = NULL;
-	}
-	std::string ProcedureName;
-	void *EmuCallback;
-	uint64_t VirtualAddress;
-}FakeAPI_t;
-
-typedef struct FakeModule_s
-{
-	FakeModule_s(ULONG64 b, ULONG s, const std::wstring &n) : ImageBase(b), ImageSize(s), DllName(n) {
-
-	}
-	ULONG64 ImageBase;
-	ULONG ImageSize;
-	std::wstring DllName;
-	std::vector<FakeAPI_t> FakeAPIs;
-}FakeModule_t;
-
-typedef struct AllocBlock_s
-{
-	AllocBlock_s(uint64_t b, ULONG s) : base(b), size(s) {
-		free = false;
-	}
-	ULONG64 base;
-	ULONG size;
-	bool free;
-}AllocBlock_t;
-
-class PeEmulation
-{
-public:
-	PeEmulation()
-	{
-		m_DisplayDisasm = false;
-		m_IsKernel = false;
-		m_IsWin64 = true;
-		m_TlsValue = -1;
-		m_PebBase = 0;
-		m_PebEnd = 0;
-		m_TebBase = 0;
-		m_TebEnd = 0;
-		m_DriverObjectBase = 0;
-	}
-
-	void InitProcessorState();
-	void InitTebPeb();
-	void InitDriverObject();
-	void InitKSharedUserData();
-
-	void MapImageToEngine(const std::wstring &ImageName, PVOID ImageBase, ULONG ImageSize, ULONG64 MappedBase);
-	bool FindAddressInRegion(ULONG64 address, std::stringstream &RegionName);
-	bool FindAPIByAddress(ULONG64 address, std::wstring &DllName, FakeAPI_t **api);
-	bool FindModuleByAddress(ULONG64 address, ULONG64 &DllBase);
-	bool RegisterAPIEmulation(const std::wstring &DllName, const char *ProcedureName, void *callback, int argsCount);
-	void AddAPIEmulation(FakeAPI_t *r, void *callback, int argsCount);
-	
-	VOID LdrResolveExportTable(FakeModule_t *module, PVOID ImageBase, ULONG64 MappedBase);
-	ULONG64 LdrGetProcAddress(ULONG64 ImageBase, const char *ProcedureName);
-	NTSTATUS LdrFindDllByName(const std::wstring &DllName, ULONG64 *ImageBase, ULONG *ImageSize, bool LoadIfNotExist);
-	NTSTATUS LdrLoadDllByName(const std::wstring &DllName, ULONG64 *ImageBase, ULONG *ImageSize);
-
-	ULONG64 HeapAlloc(ULONG Bytes);
-	bool HeapFree(ULONG64 FreeAddress);
-public:
-	csh m_cs;
-	uc_engine *m_uc;
-	bool m_IsWin64;
-	bool m_IsKernel;
-	bool m_DisplayDisasm;
-	uint64_t m_KSharedUserDataBase;
-	uint64_t m_KSharedUserDataEnd;
-	uint64_t m_StackBase;
-	uint64_t m_StackEnd;
-	uint64_t m_ImageBase;
-	uint64_t m_ImageEnd;
-	uint64_t m_ImageEntry;
-	uint64_t m_HeapBase;
-	uint64_t m_HeapEnd;
-	uint64_t m_LoadModuleBase;
-
-	//usermode only
-	uint64_t m_PebBase;
-	uint64_t m_PebEnd;
-	uint64_t m_TebBase;
-	uint64_t m_TebEnd;
-
-	//kernelmode only
-	uint64_t m_DriverObjectBase;
-
-	std::vector<FakeModule_t *> m_FakeModules;
-	std::vector<AllocBlock_t> m_HeapAllocs;
-	uint64_t m_TlsValue;
-	uint64_t m_LastRipModule;
-	blackbone::Process thisProc;
-};
-
-#define API_FUNCTION_SIZE 8
-#define PAGE_SIZE 0x1000
-#define PAGE_ALIGN(Va) (ULONG_PTR)(Va) & ~(PAGE_SIZE - 1)
-#define PAGE_ALIGN_64(Va) (Va) & ~(0x1000ull - 1)
-#define PAGE_ALIGN_64k(Va) ((Va)) & ~(0x10000ull - 1)
-
-#define AlignSize(Size, Align) (Size+Align-1)/Align*Align
+uint64_t EmuReadReturnAddress(uc_engine *uc);
+bool EmuReadNullTermUnicodeString(uc_engine *uc, uint64_t address, std::wstring &str);
+bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str);
 
 blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* context, blackbone::Process& /*process*/, const blackbone::ModuleData& modInfo)
 {
@@ -169,23 +69,8 @@ void PeEmulation::AddAPIEmulation(FakeAPI_t *r, void *callback, int argsCount)
 	{
 		uc_err err;
 
-		if (argsCount > 4)
-		{
-			unsigned char code[] = "\x48\x83\xC4\x00\xC3";
-
-			code[3] = argsCount * 8;
-
-			err = uc_mem_write(m_uc, r->VirtualAddress, code, sizeof(code));
-		}
-		else
-		{
-			unsigned char code[] = "\xC3";
-
-			err = uc_mem_write(m_uc, r->VirtualAddress, code, sizeof(code));
-		}
-
-		uc_hook trace;
-		err = uc_hook_add(m_uc, &trace, UC_HOOK_CODE, callback, this, r->VirtualAddress, r->VirtualAddress + API_FUNCTION_SIZE - 1);
+		unsigned char code[] = "\xC3";
+		err = uc_mem_write(m_uc, r->VirtualAddress, code, sizeof(code));
 	}
 }
 
@@ -205,7 +90,7 @@ bool PeEmulation::RegisterAPIEmulation(const std::wstring &DllName, const char *
 					return true;
 				}
 			}
-			printf("failed to register API emulation for %s\n", ProcedureName);
+			*outs << "failed to register API emulation for " << ProcedureName << "\n";
 			return false;
 		}
 	}
@@ -266,6 +151,19 @@ bool PeEmulation::FindAddressInRegion(ULONG64 address, std::stringstream &Region
 		return true;
 	}
 	
+	return false;
+}
+
+bool PeEmulation::FindAddressInMemMappings(ULONG64 baseaddress, ULONG64 &mapaddress)
+{
+	for (size_t i = 0; i < m_MemMappings.size(); ++i)
+	{
+		if (baseaddress >= m_MemMappings[i].baseva && baseaddress < m_MemMappings[i].baseva + m_MemMappings[i].size)
+		{
+			mapaddress = m_MemMappings[i].mappedva + (baseaddress - m_MemMappings[i].baseva);
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -488,79 +386,33 @@ void PeEmulation::MapImageToEngine(const std::wstring &ImageName, PVOID ImageBas
 	}
 }
 
-bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str)
-{
-	char c;
-	uc_err err;
-	size_t len = 0;
-	while (1)
-	{
-		err = uc_mem_read(uc, address + len, &c, sizeof(char));
-		if (err != UC_ERR_OK)
-			return false;
-		if (c != '\0')
-			str.push_back(c);
-		else
-			break;
-
-		len += sizeof(char);
-
-		if (len > 1024 * sizeof(char))
-			break;
-	}
-
-	return true;
-}
-
-bool EmuReadNullTermUnicodeString(uc_engine *uc, uint64_t address, std::wstring &str)
-{
-	wchar_t c;
-	uc_err err;
-	size_t len = 0;
-	while (1)
-	{
-		err = uc_mem_read(uc, address + len, &c, sizeof(wchar_t));
-		if (err != UC_ERR_OK)
-			return false;
-		if (c != L'\0')
-			str.push_back(c);
-		else
-			break;
-
-		len += sizeof(wchar_t);
-
-		if (len > 1024 * sizeof(wchar_t))
-			break;
-	}
-
-	return true;
-}
-
-uint64_t EmuReadReturnAddress(uc_engine *uc)
-{
-	uint64_t rsp;
-	uc_reg_read(uc, UC_X86_REG_RSP, &rsp);
-	uc_mem_read(uc, rsp, &rsp, 8);
-
-	return rsp;
-}
-
-static void CodeDisasmCallback(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+static void CodeCallback(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 {
 	PeEmulation *ctx = (PeEmulation *)user_data;
 	
-	unsigned char codeBuffer[15];
-	uc_mem_read(uc, address, codeBuffer, size);
+	if (ctx->m_DisplayDisasm)
+	{
+		unsigned char codeBuffer[15];
+		uc_mem_read(uc, address, codeBuffer, size);
 
-	cs_insn insn;
-	memset(&insn, 0, sizeof(insn));
+		cs_insn insn;
+		memset(&insn, 0, sizeof(insn));
 
-	uint64_t virtualBase = address;
-	uint8_t *code = codeBuffer;
-	size_t codeSize = size;
-	cs_disasm_iter(ctx->m_cs, (const uint8_t **)&code, &codeSize, &virtualBase, &insn);
+		uint64_t virtualBase = address;
+		uint8_t *code = codeBuffer;
+		size_t codeSize = size;
+		cs_disasm_iter(ctx->m_cs, (const uint8_t **)&code, &codeSize, &virtualBase, &insn);
 
-	printf("%016I64X\t\t\t%s\t\t%s\n", address, insn.mnemonic, insn.op_str);
+		*outs << std::hex << address << "\t\t\t" << insn.mnemonic << "\t\t" << insn.op_str << "\n";
+	}
+
+	ctx->m_LastRip = address;
+	ctx->m_ExecCodeCount++;
+
+	if (ctx->m_ExecCodeCount % 100000 == 0)
+	{
+		outs->flush();
+	}
 }
 
 static bool InvalidRwxCallback(uc_engine *uc, uc_mem_type type,
@@ -570,27 +422,77 @@ static bool InvalidRwxCallback(uc_engine *uc, uc_mem_type type,
 
 	switch (type) {
 	case UC_MEM_FETCH_PROT: {
-		auto retaddr = EmuReadReturnAddress(uc);
+		uint64_t rip;
+		uc_reg_read(uc, UC_X86_REG_RIP, &rip);
+
 		std::stringstream region;
-		if (ctx->FindAddressInRegion(retaddr, region))
-			std::cout << "UC_MEM_FETCH_PROT API called from" << region.str() << "\n";
+		if (ctx->FindAddressInRegion(address, region))
+			*outs << "UC_MEM_FETCH_PROT from " << region.str() << "\n";
+		else
+			*outs << "UC_MEM_FETCH_PROT from " << address << "\n";
+
+		std::stringstream region2;
+		if (ctx->FindAddressInRegion(rip, region2))
+			*outs << "UC_MEM_FETCH_PROT rip at " << region2.str() << "\n";
+		else
+			*outs << "UC_MEM_FETCH_PROT rip at " << rip << "\n";
+
+		uc_emu_stop(uc);
+		break;
+	}
+	case UC_MEM_WRITE_PROT: {
+		uint64_t rip;
+		uc_reg_read(uc, UC_X86_REG_RIP, &rip);
+
+		std::stringstream region;
+		if (ctx->FindAddressInRegion(address, region))
+			*outs << "UC_MEM_WRITE_PROT from " << region.str() << "\n";
+		else
+			*outs << "UC_MEM_WRITE_PROT from " << address << "\n";
+
+		std::stringstream region2;
+		if (ctx->FindAddressInRegion(rip, region2))
+			*outs << "UC_MEM_WRITE_PROT rip at " << region2.str() << "\n";
+		else
+			*outs << "UC_MEM_WRITE_PROT rip at " << rip << "\n";
+
 		uc_emu_stop(uc);
 		break;
 	}
 	case UC_MEM_FETCH_UNMAPPED: {
-		auto retaddr = EmuReadReturnAddress(uc);
+		uint64_t rip;
+		uc_reg_read(uc, UC_X86_REG_RIP, &rip);
+
 		std::stringstream region;
-		if (ctx->FindAddressInRegion(retaddr, region))
-			std::cout << "UC_MEM_FETCH_UNMAPPED API called from" << region.str() << "\n";
+		if (ctx->FindAddressInRegion(address, region))
+			*outs << "UC_MEM_FETCH_UNMAPPED from " << region.str() << "\n";
+		else
+			*outs << "UC_MEM_FETCH_UNMAPPED from " << address << "\n";
+
+		std::stringstream region2;
+		if (ctx->FindAddressInRegion(rip, region2))
+			*outs << "UC_MEM_FETCH_UNMAPPED rip at " << region2.str() << "\n";
+		else
+			*outs << "UC_MEM_FETCH_UNMAPPED rip at " << rip << "\n";
+
 		uc_emu_stop(uc);
 		break;
 	}
 	case UC_MEM_READ_UNMAPPED: {
 		uint64_t rip;
 		uc_reg_read(uc, UC_X86_REG_RIP, &rip);
+
 		std::stringstream region;
-		if (ctx->FindAddressInRegion(rip, region))
-			std::cout << "UC_MEM_READ_UNMAPPED rip at " << region.str() << "\n";
+		if (ctx->FindAddressInRegion(address, region))
+			*outs << "UC_MEM_READ_UNMAPPED from " << region.str() << "\n";
+		else
+			*outs << "UC_MEM_READ_UNMAPPED from " << address << "\n";
+
+		std::stringstream region2;
+		if (ctx->FindAddressInRegion(rip, region2))
+			*outs << "UC_MEM_READ_UNMAPPED rip at " << region2.str() << "\n";
+		else
+			*outs << "UC_MEM_READ_UNMAPPED rip at " << rip << "\n";
 
 		uc_emu_stop(uc);
 		break;
@@ -598,9 +500,19 @@ static bool InvalidRwxCallback(uc_engine *uc, uc_mem_type type,
 	case UC_MEM_WRITE_UNMAPPED: {
 		uint64_t rip;
 		uc_reg_read(uc, UC_X86_REG_RIP, &rip);
+
 		std::stringstream region;
-		if (ctx->FindAddressInRegion(rip, region))
-			std::cout << "UC_MEM_WRITE_UNMAPPED rip at " << region.str() << "\n";
+		if (ctx->FindAddressInRegion(address, region))
+			*outs << "UC_MEM_WRITE_UNMAPPED from " << region.str() << "\n";
+		else
+			*outs << "UC_MEM_WRITE_UNMAPPED from " << address << "\n";
+
+		std::stringstream region2;
+		if (ctx->FindAddressInRegion(rip, region2))
+			*outs << "UC_MEM_WRITE_UNMAPPED rip at " << region2.str() << "\n";
+		else
+			*outs << "UC_MEM_WRITE_UNMAPPED rip at " << rip << "\n";
+
 		uc_emu_stop(uc);
 		break;
 	}
@@ -618,32 +530,38 @@ static void RwxCallback(uc_engine *uc, uc_mem_type type,
 		std::stringstream region;
 		if (!ctx->FindAddressInRegion(address, region))
 		{
-			printf("UC_MEM_READ out of region\n");
+			*outs << "UC_MEM_READ out of region\n";
 
 			uint64_t rip;
 			uc_reg_read(uc, UC_X86_REG_RIP, &rip);
 			if (ctx->FindAddressInRegion(rip, region))
-				std::cout << "UC_MEM_READ rip at " << region.str() << "\n";
+				*outs << "UC_MEM_READ rip at " << region.str() << "\n";
 
 			uc_emu_stop(uc);
 		}
-
 		break;
 	}
 	case UC_MEM_WRITE: {
 		std::stringstream region;
 		if (!ctx->FindAddressInRegion(address, region))
 		{
-			printf("UC_MEM_WRITE out of region\n");
+			*outs << "UC_MEM_WRITE out of region\n";
 
 			uint64_t rip;
 			uc_reg_read(uc, UC_X86_REG_RIP, &rip);
 			if (ctx->FindAddressInRegion(rip, region))
-				std::cout << "UC_MEM_WRITE rip at " << region.str() << "\n";
+				*outs << "UC_MEM_WRITE rip at " << region.str() << "\n";
 
 			uc_emu_stop(uc);
 		}
-
+		uint64_t mapaddress;
+		if (ctx->FindAddressInMemMappings(address, mapaddress))
+		{
+			uc_mem_write(uc, mapaddress, &value, size);
+			*outs << "write to mapping at " << mapaddress << "\n";
+		}
+		if (address % 0xc45d == 0xc45d)
+			_CrtDbgBreak();
 		break;
 	}
 	case UC_MEM_FETCH: {
@@ -673,19 +591,28 @@ static void EmuUnknownAPI(uc_engine *uc, uint64_t address, uint32_t size, void *
 			{
 				if (!api->EmuCallback)
 				{
-					printf("API emulation callback not registered %ws!%s\n", DllName.c_str(), api->ProcedureName.c_str());
+					std::string aDllName;
+					UnicodeToANSI(DllName, aDllName);
+					*outs << "API emulation callback not registered: " << aDllName << "!" << api->ProcedureName << "\n";
 					auto retaddr = EmuReadReturnAddress(uc);
 					if (retaddr >= ctx->m_ImageBase && retaddr < ctx->m_ImageEnd)
-						printf("called from imagebase+0x%X\n", (ULONG)(retaddr - ctx->m_ImageBase));
+						*outs << "called from imagebase+0x" << std::hex << (ULONG)(retaddr - ctx->m_ImageBase) << "\n";
 					uc_emu_stop(uc);
+				}
+				else
+				{
+					void(*callback)(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+						= (decltype(callback))api->EmuCallback;
+
+					callback(uc, address, size, user_data);
 				}
 			}
 			else
 			{
-				printf("unknown API called\n");
+				*outs << "unknown API called\n";
 				auto retaddr = EmuReadReturnAddress(uc);
 				if (retaddr >= ctx->m_ImageBase && retaddr < ctx->m_ImageEnd)
-					printf("called from imagebase+0x%X\n", (ULONG)(retaddr - ctx->m_ImageBase));
+					*outs << "called from imagebase+0x" << std::hex << (ULONG)(retaddr - ctx->m_ImageBase) << "\n";
 				uc_emu_stop(uc);
 			}
 		}
@@ -697,399 +624,7 @@ static void EmuUnknownAPI(uc_engine *uc, uint64_t address, uint32_t size, void *
 		{
 			_CrtDbgBreak();
 		}
-	}
-}
-
-static void EmuGetSystemTimeAsFileTime(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	FILETIME ft;
-	GetSystemTimeAsFileTime(&ft);
-
-	err = uc_mem_write(uc, rcx, &ft, sizeof(FILETIME));
-}
-
-static void EmuGetCurrentThreadId(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	DWORD ThreadId = 1024;
-
-	auto err = uc_reg_write(uc, UC_X86_REG_EAX, &ThreadId);
-}
-
-static void EmuGetCurrentProcessId(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	DWORD ProcessId = 1000;
-
-	auto err = uc_reg_write(uc, UC_X86_REG_EAX, &ProcessId);
-}
-
-static void EmuQueryPerformanceCounter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	LARGE_INTEGER li;
-	BOOL r = QueryPerformanceCounter(&li);
-
-	err = uc_mem_write(uc, rcx, &li, sizeof(LARGE_INTEGER));
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuLoadLibraryExW(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	uint64_t rdx;
-	err = uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
-
-	uint32_t r8d;
-	err = uc_reg_read(uc, UC_X86_REG_R8D, &r8d);
-
-	std::wstring DllName;
-	uint64_t r = 0;
-	if (EmuReadNullTermUnicodeString(uc, rcx, DllName))
-	{
-		printf("EmuLoadLibraryExW %ws\n", DllName.c_str());
-
-		ULONG64 ImageBase = 0;
-		NTSTATUS st = ctx->LdrFindDllByName(DllName, &ImageBase, NULL, true);
-		if (NT_SUCCESS(st))
-		{
-			r = ImageBase;
-		}
-	}
-
-	err = uc_reg_write(uc, UC_X86_REG_RAX, &r);
-}
-
-static void EmuGetProcAddress(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	uint64_t rdx;
-	err = uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
-
-	std::string ProcedureName;
-	uint64_t r = 0;
-	if (EmuReadNullTermString(uc, rdx, ProcedureName))
-	{
-		printf("GetProcAddress %s\n", ProcedureName.c_str());
-
-		r = ctx->LdrGetProcAddress(rcx, ProcedureName.c_str());
-	}
-
-	err = uc_reg_write(uc, UC_X86_REG_RAX, &r);
-}
-
-static void EmuGetModuleHandleA(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	std::string ModuleName;
-	uint64_t r = 0;
-	if (EmuReadNullTermString(uc, rcx, ModuleName))
-	{
-		printf("GetModuleHandleA %s\n", ModuleName.c_str());
-
-		std::wstring wModuleName;
-		ANSIToUnicode(ModuleName, wModuleName);
-		ctx->LdrFindDllByName(wModuleName, &r, NULL, false);
-	}
-
-	err = uc_reg_write(uc, UC_X86_REG_RAX, &r);
-}
-
-static void EmuGetLastError(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint32_t r = 0;
-
-	auto err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-typedef struct _RTL_CRITICAL_SECTION_64 {
-	uint64_t DebugInfo;
-	uint32_t LockCount;
-	uint32_t RecursionCount;
-	uint64_t OwningThread;
-	uint64_t LockSemaphore;
-	uint64_t SpinCount;
-} RTL_CRITICAL_SECTION_64, *PRTL_CRITICAL_SECTION_64;
-
-static void EmuInitializeCriticalSectionAndSpinCount(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	uint32_t edx;
-	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
-
-	RTL_CRITICAL_SECTION_64 CrtSection;
-	CrtSection.DebugInfo = 0;
-	CrtSection.LockCount = 0;
-	CrtSection.LockSemaphore = 0;
-	CrtSection.OwningThread = 0;
-	CrtSection.RecursionCount = 0;
-	CrtSection.SpinCount = edx;
-
-	uc_mem_write(uc, rcx, &CrtSection, sizeof(RTL_CRITICAL_SECTION_64));
-
-	uint32_t r = 1;
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuInitializeCriticalSectionEx(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	uint32_t edx;
-	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
-
-	uint32_t r8d;
-	err = uc_reg_read(uc, UC_X86_REG_R8D, &r8d);
-
-	RTL_CRITICAL_SECTION_64 CrtSection;
-	CrtSection.DebugInfo = 0;
-	CrtSection.LockCount = 0;
-	CrtSection.LockSemaphore = 0;
-	CrtSection.OwningThread = 0;
-	CrtSection.RecursionCount = 0;
-	CrtSection.SpinCount = edx;
-
-	uc_mem_write(uc, rcx, &CrtSection, sizeof(RTL_CRITICAL_SECTION_64));
-
-	uint32_t r = 1;
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuTlsAlloc(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint32_t r = 0;
-
-	auto err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuTlsSetValue(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint32_t r = 0;
-
-	uint64_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	if (ecx == 0)
-	{
-		uint64_t rdx;
-		err = uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
-
-		r = 1;
-
-		//ctx->m_TlsValue = rdx;
-	}
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuTlsFree(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint32_t r = 0;
-
-	uint64_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	if (ecx == 0)
-	{
-		r = 1;
-	}
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &r);
-}
-
-static void EmuDeleteCriticalSection(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	RTL_CRITICAL_SECTION_64 CrtSection;
-	CrtSection.DebugInfo = 0;
-	CrtSection.LockCount = 0;
-	CrtSection.LockSemaphore = 0;
-	CrtSection.OwningThread = 0;
-	CrtSection.RecursionCount = 0;
-	CrtSection.SpinCount = 0;
-
-	uc_mem_write(uc, rcx, &CrtSection, sizeof(RTL_CRITICAL_SECTION_64));
-}
-
-static void EmuLocalAlloc(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t alloc = 0;
-
-	uint32_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	uint32_t edx;
-	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
-
-	if (ecx == LMEM_FIXED)
-	{
-		alloc = ctx->HeapAlloc(edx);
-	}
-
-	printf("LocalAlloc %d bytes, allocated at 0x%I64x\n", edx, alloc);
-
-	err = uc_reg_write(uc, UC_X86_REG_RAX, &alloc);
-}
-
-static void EmuRtlIsProcessorFeaturePresent(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint8_t al = 0;
-
-	uint32_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	if (ecx == 0x1C)
-	{
-		al = 0;
-	}
-	else
-	{
-		al = IsProcessorFeaturePresent(ecx);
-	}
-
-	printf("RtlIsProcessorFeaturePresent feature %d\n", ecx);
-
-	err = uc_reg_write(uc, UC_X86_REG_AL, &al);
-}
-
-static void EmuExAllocatePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t alloc = 0;
-
-	uint32_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	uint32_t edx;
-	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
-
-	alloc = ctx->HeapAlloc(edx);
-
-	printf("ExAllocatePool type %d, %d bytes, allocated at 0x%I64x\n", ecx, edx, alloc);
-
-	err = uc_reg_write(uc, UC_X86_REG_RAX, &alloc);
-}
-
-static void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint32_t ecx;
-	auto err = uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
-
-	uint64_t rdx;
-	err = uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
-
-	uint32_t r8d;
-	err = uc_reg_read(uc, UC_X86_REG_R8D, &r8d);
-
-	uint64_t r9;
-	err = uc_reg_read(uc, UC_X86_REG_R9, &r9);
-	
-	char *buf = (char *)malloc(r8d);
-	memset(buf, 0, r8d);
-
-	ULONG retlen = 0;
-
-	uint32_t eax = (uint32_t)NtQuerySystemInformation((SYSTEM_INFORMATION_CLASS)ecx, buf, r8d, &retlen);
-
-	if (eax == STATUS_INFO_LENGTH_MISMATCH)
-	{
-
-	}
-	else if (eax == STATUS_SUCCESS)
-	{
-		if (ecx == (uint32_t)SystemModuleInformation)
-		{
-			auto pMods = (PRTL_PROCESS_MODULES)buf;
-			PRTL_PROCESS_MODULES newMods = (PRTL_PROCESS_MODULES)malloc(r8d);
-			memset(newMods, 0, r8d);
-
-			ULONG numberNewMods = 0;
-			for (ULONG i = 0; i < pMods->NumberOfModules; i++)
-			{
-				PCHAR modname = (PCHAR)pMods->Modules[i].FullPathName + pMods->Modules[i].OffsetToFileName;
-				std::wstring wModName;
-				ANSIToUnicode(modname, wModName);
-
-				ULONG64 ImageBase = 0;
-				ULONG ImageSize = 0;
-				auto stFind = ctx->LdrFindDllByName(wModName, &ImageBase, &ImageSize, false);
-				if (stFind == STATUS_SUCCESS)
-				{
-					memcpy(&newMods->Modules[numberNewMods], &pMods->Modules[i], sizeof(pMods->Modules[i]));
-					newMods->Modules[numberNewMods].ImageBase = (PVOID)ImageBase;
-					newMods->Modules[numberNewMods].ImageSize = ImageSize;
-					numberNewMods++;
-				}
-			}
-			newMods->NumberOfModules = numberNewMods;
-
-			retlen = offsetof(RTL_PROCESS_MODULES, Modules) + sizeof(newMods->Modules[0]) * numberNewMods;
-
-			uc_mem_write(uc, rdx, newMods, retlen);
-
-			free(newMods);
-			
-		}
-	}
-	if (r9 != 0)
-	{
-		uc_mem_write(uc, r9, &retlen, sizeof(retlen));
-	}
-
-	free(buf);
-
-	printf("NtQuerySystemInformation type %d, return %08X\n", ecx, eax);
-
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &eax);
-}
-
-static void EmuExFreePoolWithTag(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
-{
-	PeEmulation *ctx = (PeEmulation *)user_data;
-
-	uint64_t alloc = 0;
-
-	uint64_t rcx;
-	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
-
-	uint32_t edx;
-	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
-
-	ctx->HeapFree(rcx);
-
-	printf("ExFreePoolWithTag free 0x%I64x\n", rcx);
+	}	
 }
 
 static void init_descriptor64(SegmentDesctiptorX64 *desc, uint64_t base, uint64_t limit, bool is_code, bool is_long_mode)
@@ -1160,6 +695,16 @@ void PeEmulation::InitProcessorState()
 	SegmentSelector gs = { 0 };
 	gs.fields.index = 2;
 	uc_reg_write(m_uc, UC_X86_REG_GS, &gs.all);
+
+	FlagRegister eflags = {0};
+	eflags.fields.id = 1;
+	eflags.fields.intf = 1;
+	eflags.fields.reserved1 = 1;
+
+	uc_reg_write(m_uc, UC_X86_REG_EFLAGS, &eflags.all);
+
+	uint64_t cr8 = 0;
+	uc_reg_write(m_uc, UC_X86_REG_CR8, &cr8);
 }
 
 void PeEmulation::InitTebPeb()
@@ -1189,11 +734,24 @@ void PeEmulation::InitTebPeb()
 	uc_reg_write(m_uc, UC_X86_REG_MSR, &msr);
 }
 
+void PeEmulation::InitKTHREAD()
+{
+	//todo
+	m_KThreadBase = HeapAlloc(1234);
+
+	uc_x86_msr msr;
+	msr.rid = (uint32_t)Msr::kIa32GsBase;
+	msr.value = m_KThreadBase;
+
+	uc_reg_write(m_uc, UC_X86_REG_MSR, &msr);
+}
+
 void PeEmulation::InitDriverObject()
 {
 	DRIVER_OBJECT DriverObject = { 0 };
 	DriverObject.DriverSize = (ULONG)(m_ImageEnd - m_ImageBase);
-	DriverObject.DriverStart = (PVOID)m_ImageEntry;
+	DriverObject.DriverStart = (PVOID)m_ImageBase;;
+	DriverObject.DriverInit = (PVOID)m_ImageEntry;
 	DriverObject.Size = sizeof(DRIVER_OBJECT);
 
 	m_DriverObjectBase = HeapAlloc(sizeof(DRIVER_OBJECT));
@@ -1240,6 +798,10 @@ ULONG64 PeEmulation::HeapAlloc(ULONG AllocBytes)
 		}
 		if (!alloc)
 			alloc = m_HeapBase;
+
+		if (alloc + AllocBytes > m_HeapEnd)
+			return 0;
+
 		m_HeapAllocs.emplace_back(alloc, AllocBytes);
 	}
 
@@ -1260,6 +822,31 @@ bool PeEmulation::HeapFree(ULONG64 FreeAddress)
 	return false;
 }
 
+bool PeEmulation::CreateMemMapping(ULONG64 BaseAddress, ULONG64 MapAddress, ULONG Bytes)
+{
+	virtual_buffer_t buf(Bytes);
+	uc_mem_read(m_uc, BaseAddress, buf.GetBuffer(), Bytes);
+	uc_mem_write(m_uc, MapAddress, buf.GetBuffer(), Bytes);
+
+	m_MemMappings.emplace_back(BaseAddress, MapAddress, Bytes);
+	m_MemMappings.emplace_back(MapAddress, BaseAddress, Bytes);
+
+	return true;
+}
+
+void PeEmulation::DeleteMemMapping(ULONG64 BaseAddress)
+{
+	for (auto itor = m_MemMappings.begin(); itor != m_MemMappings.end();)
+	{
+		if (itor->mappedva == BaseAddress || itor->baseva == BaseAddress)
+		{
+			itor = m_MemMappings.erase(itor);
+			break;
+		}
+		itor++;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	using namespace blackbone;
@@ -1272,6 +859,8 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	outs = &std::cout;
+
 	std::string filename = argv[1];
 	std::wstring wfilename;
 	ANSIToUnicode(filename, wfilename);
@@ -1282,6 +871,10 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[i], "-k"))
 		{
 			ctx.m_IsKernel = true;
+		}
+		if (!strcmp(argv[i], "-tofile"))
+		{
+			outs = new std::ofstream("console.log");
 		}
 		if (!strcmp(argv[i], "-disasm"))
 		{
@@ -1328,7 +921,7 @@ int main(int argc, char **argv)
 	ctx.m_StackEnd = stack + stack_size;
 	ctx.m_LoadModuleBase = (!ctx.m_IsKernel) ? 0x180000000ull : 0xFFFFF80000000000ull;
 	ctx.m_HeapBase = (!ctx.m_IsKernel) ? 0x10000000ull : 0xFFFFFA0000000000ull;
-	ctx.m_HeapEnd = ctx.m_HeapBase + 0x400000ull;
+	ctx.m_HeapEnd = ctx.m_HeapBase + 0x4000000ull;
 
 	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, UC_PROT_READ | UC_PROT_WRITE);
 
@@ -1363,7 +956,6 @@ int main(int argc, char **argv)
 			ctx.RegisterAPIEmulation(L"kernel32.dll", "InitializeCriticalSectionEx", EmuInitializeCriticalSectionEx, 3);
 
 		ctx.RegisterAPIEmulation(L"ntdll.dll", "RtlDeleteCriticalSection", EmuDeleteCriticalSection, 1);
-
 		ctx.RegisterAPIEmulation(L"ntdll.dll", "RtlIsProcessorFeaturePresent", EmuRtlIsProcessorFeaturePresent, 1);
 
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "TlsAlloc", EmuTlsAlloc, 0);
@@ -1376,6 +968,9 @@ int main(int argc, char **argv)
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "ExAllocatePool", EmuExAllocatePool, 2);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "NtQuerySystemInformation", EmuNtQuerySystemInformation, 4);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "ExFreePoolWithTag", EmuExFreePoolWithTag, 2);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoAllocateMdl", EmuIoAllocateMdl, 5);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmProbeAndLockPages", EmuMmProbeAndLockPages, 3); 
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmMapLockedPagesSpecifyCache", EmuMmMapLockedPagesSpecifyCache, 6);
 	}
 
 	_CONTEXT reg64;
@@ -1421,17 +1016,15 @@ int main(int argc, char **argv)
 	uc_reg_write(uc, UC_X86_REG_RBP, &reg64.Rbp);
 	uc_reg_write(uc, UC_X86_REG_RSP, &reg64.Rsp);
 
-	uc_hook_add(uc, &trace, UC_HOOK_MEM_READ_UNMAPPED | UC_HOOK_MEM_WRITE_UNMAPPED | UC_HOOK_MEM_FETCH_UNMAPPED | UC_HOOK_MEM_FETCH_PROT,
+	uc_hook_add(uc, &trace, UC_HOOK_MEM_READ_UNMAPPED | UC_HOOK_MEM_WRITE_UNMAPPED | 
+		UC_HOOK_MEM_FETCH_UNMAPPED | UC_HOOK_MEM_FETCH_PROT | UC_HOOK_MEM_WRITE_PROT,
 		InvalidRwxCallback, &ctx, 1, 0);
 
 	uc_hook_add(uc, &trace2, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE | UC_HOOK_MEM_FETCH,
 		RwxCallback, &ctx, 1, 0);
 
-	if (ctx.m_DisplayDisasm)
-	{
-		uc_hook_add(uc, &trace2, UC_HOOK_CODE,
-			CodeDisasmCallback, &ctx, 1, 0);
-	}
+	uc_hook_add(uc, &trace2, UC_HOOK_CODE,
+		CodeCallback, &ctx, 1, 0);
 
 	err = uc_emu_start(uc, ctx.m_ImageEntry, ctx.m_ImageEnd, 0, 0);
 
@@ -1440,6 +1033,14 @@ int main(int argc, char **argv)
 	cs_close(&ctx.m_cs);
 
 	ctx.thisProc.mmap().UnmapAllModules();
+
+	*outs << "emu result: " << err << "\n";
+	*outs << "last rip: " << ctx.m_LastRip;
+	std::stringstream rip_region;
+	if(ctx.FindAddressInRegion(ctx.m_LastRip, rip_region))
+		*outs << " (" << rip_region.str() << ")";
+
+	outs->flush();
 
 	return 0;
 }

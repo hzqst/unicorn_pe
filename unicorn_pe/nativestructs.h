@@ -124,6 +124,35 @@ enum class Msr : unsigned int {
 	kIa32TscAux = 0xC0000103,
 };
 
+union FlagRegister {
+	ULONG_PTR all;
+	struct {
+		ULONG_PTR cf : 1;          //!< [0] Carry flag
+		ULONG_PTR reserved1 : 1;   //!< [1] Always 1
+		ULONG_PTR pf : 1;          //!< [2] Parity flag
+		ULONG_PTR reserved2 : 1;   //!< [3] Always 0
+		ULONG_PTR af : 1;          //!< [4] Borrow flag
+		ULONG_PTR reserved3 : 1;   //!< [5] Always 0
+		ULONG_PTR zf : 1;          //!< [6] Zero flag
+		ULONG_PTR sf : 1;          //!< [7] Sign flag
+		ULONG_PTR tf : 1;          //!< [8] Trap flag
+		ULONG_PTR intf : 1;        //!< [9] Interrupt flag
+		ULONG_PTR df : 1;          //!< [10] Direction flag
+		ULONG_PTR of : 1;          //!< [11] Overflow flag
+		ULONG_PTR iopl : 2;        //!< [12:13] I/O privilege level
+		ULONG_PTR nt : 1;          //!< [14] Nested task flag
+		ULONG_PTR reserved4 : 1;   //!< [15] Always 0
+		ULONG_PTR rf : 1;          //!< [16] Resume flag
+		ULONG_PTR vm : 1;          //!< [17] Virtual 8086 mode
+		ULONG_PTR ac : 1;          //!< [18] Alignment check
+		ULONG_PTR vif : 1;         //!< [19] Virtual interrupt flag
+		ULONG_PTR vip : 1;         //!< [20] Virtual interrupt pending
+		ULONG_PTR id : 1;          //!< [21] Identification flag
+		ULONG_PTR reserved5 : 10;  //!< [22:31] Always 0
+	} fields;
+};
+static_assert(sizeof(FlagRegister) == sizeof(void*), "Size check");
+
 #define IRP_MJ_CREATE                   0x00
 #define IRP_MJ_CREATE_NAMED_PIPE        0x01
 #define IRP_MJ_CLOSE                    0x02
@@ -409,3 +438,24 @@ typedef struct _RTL_PROCESS_MODULES
 	ULONG NumberOfModules;
 	RTL_PROCESS_MODULE_INFORMATION Modules[1];
 } RTL_PROCESS_MODULES, *PRTL_PROCESS_MODULES;
+
+typedef struct _RTL_CRITICAL_SECTION_64 {
+	uint64_t DebugInfo;
+	uint32_t LockCount;
+	uint32_t RecursionCount;
+	uint64_t OwningThread;
+	uint64_t LockSemaphore;
+	uint64_t SpinCount;
+} RTL_CRITICAL_SECTION_64, *PRTL_CRITICAL_SECTION_64;
+
+typedef struct _MDL {
+	struct _MDL *Next;
+	SHORT Size;
+	SHORT MdlFlags;
+
+	PVOID Process;
+	PVOID MappedSystemVa;   /* see creators for field size annotations. */
+	PVOID StartVa;   /* see creators for validity; could be address 0.  */
+	ULONG ByteCount;
+	ULONG ByteOffset;
+} MDL, *PMDL;

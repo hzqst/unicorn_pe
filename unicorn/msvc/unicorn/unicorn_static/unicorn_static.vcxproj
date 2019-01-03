@@ -352,15 +352,8 @@ copy $(SolutionDir)..\include\unicorn\*.h $(SolutionDir)distro\include\unicorn\
       <Command>..\prebuild_script.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>mkdir $(SolutionDir)distro\
-mkdir $(SolutionDir)distro\include
-mkdir $(SolutionDir)distro\include\unicorn
-mkdir $(SolutionDir)distro\$(Platform)
-
-copy $(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName).lib $(SolutionDir)distro\$(Platform)\
-
-copy $(SolutionDir)..\include\unicorn\*.h $(SolutionDir)distro\include\unicorn\
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

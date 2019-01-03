@@ -24,9 +24,18 @@
     <ClCompile Include="encode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="emuapi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nativestructs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ucpe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="emuapi.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
