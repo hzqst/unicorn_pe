@@ -18,6 +18,13 @@
 
 extern std::ostream *outs;
 
+extern "C"
+{
+	NTSYSAPI NTSTATUS RtlGetVersion(
+		PRTL_OSVERSIONINFOW lpVersionInformation
+	);
+}
+
 bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str)
 {
 	char c;
@@ -600,4 +607,24 @@ void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_dat
 	ctx->HeapFree(rcx);
 
 	*outs << "IoFreeMdl free " << std::hex << rcx << "\n";
+}
+
+void EmuRtlGetVersion(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	RTL_OSVERSIONINFOW verinfo = {0};
+
+	uc_mem_read(uc, rcx, &verinfo, sizeof(verinfo));
+
+	auto st = RtlGetVersion(&verinfo);
+
+	uc_mem_write(uc, rcx, &verinfo, sizeof(verinfo));
+
+	*outs << "RtlGetVersion return " << std::dec << st << "\n";
+
+	uc_reg_write(uc, UC_X86_REG_RAX, &st);
 }

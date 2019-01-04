@@ -32,3 +32,4 @@ void EmuKeSetSystemAffinityThread(uc_engine *uc, uint64_t address, uint32_t size
 void EmuKeRevertToUserAffinityThread(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuRtlGetVersion(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);

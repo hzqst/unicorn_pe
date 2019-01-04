@@ -941,7 +941,7 @@ int main(int argc, char **argv)
 	ctx.m_HeapBase = (!ctx.m_IsKernel) ? 0x10000000ull : 0xFFFFFA0000000000ull;
 	ctx.m_HeapEnd = ctx.m_HeapBase + 0x1000000ull;
 
-	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, (ctx.m_IsKernel) ? UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC,  UC_PROT_READ | UC_PROT_WRITE);
+	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, (ctx.m_IsKernel) ? UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC : UC_PROT_READ | UC_PROT_WRITE);
 
 	auto MapResult = ctx.thisProc.mmap().MapImage(wfilename,
 		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExec,
@@ -994,6 +994,7 @@ int main(int argc, char **argv)
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "KeRevertToUserAffinityThread", EmuKeRevertToUserAffinityThread, 0);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmUnlockPages", EmuMmUnlockPages, 1);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoFreeMdl", EmuIoFreeMdl, 1);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "RtlGetVersion", EmuRtlGetVersion, 1);
 	}
 
 	_CONTEXT reg64;
