@@ -30,10 +30,10 @@ unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm
 ### vmprotect packed driver
 ![2](https://github.com/hzqst/unicorn_pe/raw/master/img/img2.png)
 
-### vmportect fixing encrypted IAT
+### vmprotect is fixing encrypted IAT
 ![3](https://github.com/hzqst/unicorn_pe/raw/master/img/img3.png)
 
-### vmportect walk to original entry point
+### vmprotect goes back to original entry point
 ![4](https://github.com/hzqst/unicorn_pe/raw/master/img/img4.png)
 
 ## License
