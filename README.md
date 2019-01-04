@@ -12,6 +12,7 @@ No support for exception. (x64 exception requires RtlDispatchException and Inver
 
 ## Build
 Visual Studio 2017 are required.
+Note that you have to install VC++/ATL and WindowsSDK8.1 for VS2017 to be able to compile BlackBone.
 
 Open unicorn_pe.sln with Visual Studio 2017
 
