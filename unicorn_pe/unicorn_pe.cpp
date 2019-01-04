@@ -908,7 +908,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	cs_err err2 = cs_open(CS_ARCH_X86, ctx.m_IsWin64 ? CS_MODE_64 : CS_MODE_32, &ctx.m_cs);
+	auto err2 = cs_open(CS_ARCH_X86, ctx.m_IsWin64 ? CS_MODE_64 : CS_MODE_32, &ctx.m_cs);
 	if (err2)
 	{
 		printf("failed to cs_open %d\n", err2);
@@ -941,7 +941,7 @@ int main(int argc, char **argv)
 	ctx.m_HeapBase = (!ctx.m_IsKernel) ? 0x10000000ull : 0xFFFFFA0000000000ull;
 	ctx.m_HeapEnd = ctx.m_HeapBase + 0x1000000ull;
 
-	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, UC_PROT_READ | UC_PROT_WRITE);
+	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, (ctx.m_IsKernel) ? UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC,  UC_PROT_READ | UC_PROT_WRITE);
 
 	auto MapResult = ctx.thisProc.mmap().MapImage(wfilename,
 		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExec,
@@ -1002,15 +1002,16 @@ int main(int argc, char **argv)
 
 	if (!ctx.m_IsKernel)
 	{
+		ctx.InitTebPeb();
+
 		reg64.Rcx = ctx.m_ImageBase;
 		reg64.Rdx = DLL_PROCESS_ATTACH;
 		reg64.R8 = 0;
-
-		ctx.InitTebPeb();
 	}
 	else
 	{
 		ctx.InitDriverObject();
+
 		reg64.Rcx = ctx.m_DriverObjectBase;
 		reg64.Rdx = 0;
 	}
@@ -1051,13 +1052,18 @@ int main(int argc, char **argv)
 
 	err = uc_emu_start(uc, ctx.m_ImageEntry, ctx.m_ImageEnd, 0, 0);
 
+	uc_reg_read(uc, UC_X86_REG_RAX, &reg64.Rax);
+
 	uc_close(uc);
 
 	cs_close(&ctx.m_cs);
 
 	ctx.thisProc.mmap().UnmapAllModules();
 
-	*outs << "emu result: " << err << "\n";
+	*outs << "uc_emu_start return: " << std::dec << err << "\n";
+
+	if(ctx.m_LastRip == ctx.m_ImageEnd)
+		*outs << "entrypoint return: " << std::hex << reg64.Rax << "\n";
 	*outs << "last rip: " << ctx.m_LastRip;
 
 	std::stringstream rip_region;
