@@ -40,7 +40,7 @@ unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm
 This software is released under the MIT License, see LICENSE.
 
 ## Dependencies 
-A modification of https://github.com/DarthTon/Blackbone is done to map PE files into memory correctly.
+A modification of https://github.com/DarthTon/Blackbone is done for PE manual-mapping.
 
 https://github.com/unicorn-engine/unicorn for emulation.
 
