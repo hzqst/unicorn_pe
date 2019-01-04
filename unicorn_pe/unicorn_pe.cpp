@@ -154,19 +154,6 @@ bool PeEmulation::FindAddressInRegion(ULONG64 address, std::stringstream &Region
 	return false;
 }
 
-bool PeEmulation::FindAddressInMemMappings(ULONG64 baseaddress, ULONG64 &mapaddress)
-{
-	for (size_t i = 0; i < m_MemMappings.size(); ++i)
-	{
-		if (baseaddress >= m_MemMappings[i].baseva && baseaddress < m_MemMappings[i].baseva + m_MemMappings[i].size)
-		{
-			mapaddress = m_MemMappings[i].mappedva + (baseaddress - m_MemMappings[i].baseva);
-			return true;
-		}
-	}
-	return false;
-}
-
 bool PeEmulation::FindAPIByAddress(ULONG64 address, std::wstring &DllName, FakeAPI_t **api)
 {
 	for (size_t i = 0; i < m_FakeModules.size(); ++i)
@@ -554,14 +541,10 @@ static void RwxCallback(uc_engine *uc, uc_mem_type type,
 
 			uc_emu_stop(uc);
 		}
-		uint64_t mapaddress;
-		if (ctx->FindAddressInMemMappings(address, mapaddress))
+		if (ctx->WriteMemMapping(address, value, size))
 		{
-			uc_mem_write(uc, mapaddress, &value, size);
-			*outs << "write to mapping at " << mapaddress << "\n";
+			*outs << "write to mapping address " << address << "\n";
 		}
-		if (address % 0xc45d == 0xc45d)
-			_CrtDbgBreak();
 		break;
 	}
 	case UC_MEM_FETCH: {
@@ -624,7 +607,7 @@ static void EmuUnknownAPI(uc_engine *uc, uint64_t address, uint32_t size, void *
 		{
 			_CrtDbgBreak();
 		}
-	}	
+	}
 }
 
 static void init_descriptor64(SegmentDesctiptorX64 *desc, uint64_t base, uint64_t limit, bool is_code, bool is_long_mode)
@@ -750,7 +733,7 @@ void PeEmulation::InitDriverObject()
 {
 	DRIVER_OBJECT DriverObject = { 0 };
 	DriverObject.DriverSize = (ULONG)(m_ImageEnd - m_ImageBase);
-	DriverObject.DriverStart = (PVOID)m_ImageBase;;
+	DriverObject.DriverStart = (PVOID)m_ImageBase;
 	DriverObject.DriverInit = (PVOID)m_ImageEntry;
 	DriverObject.Size = sizeof(DRIVER_OBJECT);
 
@@ -775,7 +758,7 @@ void PeEmulation::InitKSharedUserData()
 	uc_mem_write(m_uc, m_KSharedUserDataBase, (void *)0x7FFE0000, PAGE_SIZE);
 }
 
-ULONG64 PeEmulation::HeapAlloc(ULONG AllocBytes)
+ULONG64 PeEmulation::HeapAlloc(ULONG AllocBytes, bool IsPageAlign)
 {
 	ULONG64 alloc = 0;
 
@@ -796,8 +779,15 @@ ULONG64 PeEmulation::HeapAlloc(ULONG AllocBytes)
 			if (alloc < m_HeapAllocs[i].base + m_HeapAllocs[i].size)
 				alloc = m_HeapAllocs[i].base + m_HeapAllocs[i].size;
 		}
+
 		if (!alloc)
 			alloc = m_HeapBase;
+
+		if (IsPageAlign) 
+		{
+			alloc = (alloc % 0x1000ull == 0) ? alloc : AlignSize(alloc, 0x1000ull);
+			AllocBytes = (AllocBytes % 0x1000 == 0) ? AllocBytes : (ULONG)AlignSize(alloc, 0x1000);
+		}
 
 		if (alloc + AllocBytes > m_HeapEnd)
 			return 0;
@@ -810,41 +800,73 @@ ULONG64 PeEmulation::HeapAlloc(ULONG AllocBytes)
 
 bool PeEmulation::HeapFree(ULONG64 FreeAddress)
 {
+	ULONG64 maxaddr = 0;
+
+	for (size_t i = 0; i < m_HeapAllocs.size(); ++i)
+	{
+		if(maxaddr < m_HeapAllocs[i].base)
+			maxaddr = m_HeapAllocs[i].base;
+	}
+
 	for (size_t i = 0; i < m_HeapAllocs.size(); ++i)
 	{
 		if (!m_HeapAllocs[i].free && m_HeapAllocs[i].base == FreeAddress)
 		{
-			m_HeapAllocs[i].free = true;
+			if (maxaddr == FreeAddress)
+				m_HeapAllocs.erase(m_HeapAllocs.begin() + i);
+			else
+				m_HeapAllocs[i].free = true;
 			return true;
 		}
 	}
-
 	return false;
 }
 
 bool PeEmulation::CreateMemMapping(ULONG64 BaseAddress, ULONG64 MapAddress, ULONG Bytes)
 {
+	Bytes = AlignSize(Bytes, 0x1000ull);
+
 	virtual_buffer_t buf(Bytes);
 	uc_mem_read(m_uc, BaseAddress, buf.GetBuffer(), Bytes);
 	uc_mem_write(m_uc, MapAddress, buf.GetBuffer(), Bytes);
 
 	m_MemMappings.emplace_back(BaseAddress, MapAddress, Bytes);
-	m_MemMappings.emplace_back(MapAddress, BaseAddress, Bytes);
 
 	return true;
 }
 
-void PeEmulation::DeleteMemMapping(ULONG64 BaseAddress)
+void PeEmulation::DeleteMemMapping(ULONG64 MapAddress)
 {
 	for (auto itor = m_MemMappings.begin(); itor != m_MemMappings.end();)
 	{
-		if (itor->mappedva == BaseAddress || itor->baseva == BaseAddress)
+		if (itor->mappedva == MapAddress)
 		{
+			for (size_t i = 0; i < itor->blocks.size(); ++i)
+			{
+				uc_mem_write(m_uc, itor->blocks[i].va, &itor->blocks[i].value, itor->blocks[i].size);
+			}
 			itor = m_MemMappings.erase(itor);
 			break;
 		}
-		itor++;
+		else
+		{
+			itor++;
+		}
 	}
+}
+
+bool PeEmulation::WriteMemMapping(ULONG64 baseaddress, ULONG64 value, ULONG size)
+{
+	for (size_t i = 0; i < m_MemMappings.size(); ++i)
+	{
+		if (baseaddress >= m_MemMappings[i].mappedva && baseaddress < m_MemMappings[i].mappedva + m_MemMappings[i].size)
+		{
+			auto mapaddress = m_MemMappings[i].baseva + (baseaddress - m_MemMappings[i].mappedva);
+			m_MemMappings[i].blocks.emplace_back(mapaddress, value, size);
+			return true;
+		}
+	}
+	return false;
 }
 
 int main(int argc, char **argv)
@@ -872,10 +894,6 @@ int main(int argc, char **argv)
 		{
 			ctx.m_IsKernel = true;
 		}
-		if (!strcmp(argv[i], "-tofile"))
-		{
-			outs = new std::ofstream("console.log");
-		}
 		if (!strcmp(argv[i], "-disasm"))
 		{
 			ctx.m_DisplayDisasm = true;
@@ -902,7 +920,7 @@ int main(int argc, char **argv)
 
 	uc_hook trace, trace2;
 
-	uint64_t stack = (!ctx.m_IsKernel) ? 0x40000 : 0xFFFFFB0000000000ull;
+	uint64_t stack = (!ctx.m_IsKernel) ? 0x40000 : 0xFFFFFC0000000000ull;
 	size_t stack_size = 0x10000;
 
 	virtual_buffer_t stack_buf;
@@ -921,7 +939,7 @@ int main(int argc, char **argv)
 	ctx.m_StackEnd = stack + stack_size;
 	ctx.m_LoadModuleBase = (!ctx.m_IsKernel) ? 0x180000000ull : 0xFFFFF80000000000ull;
 	ctx.m_HeapBase = (!ctx.m_IsKernel) ? 0x10000000ull : 0xFFFFFA0000000000ull;
-	ctx.m_HeapEnd = ctx.m_HeapBase + 0x4000000ull;
+	ctx.m_HeapEnd = ctx.m_HeapBase + 0x1000000ull;
 
 	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, UC_PROT_READ | UC_PROT_WRITE);
 
@@ -971,6 +989,11 @@ int main(int argc, char **argv)
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoAllocateMdl", EmuIoAllocateMdl, 5);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmProbeAndLockPages", EmuMmProbeAndLockPages, 3); 
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmMapLockedPagesSpecifyCache", EmuMmMapLockedPagesSpecifyCache, 6);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "KeQueryActiveProcessors", EmuKeQueryActiveProcessors, 0);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "KeSetSystemAffinityThread", EmuKeSetSystemAffinityThread, 1);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "KeRevertToUserAffinityThread", EmuKeRevertToUserAffinityThread, 0);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmUnlockPages", EmuMmUnlockPages, 1);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoFreeMdl", EmuIoFreeMdl, 1);
 	}
 
 	_CONTEXT reg64;
@@ -1036,6 +1059,7 @@ int main(int argc, char **argv)
 
 	*outs << "emu result: " << err << "\n";
 	*outs << "last rip: " << ctx.m_LastRip;
+
 	std::stringstream rip_region;
 	if(ctx.FindAddressInRegion(ctx.m_LastRip, rip_region))
 		*outs << " (" << rip_region.str() << ")";

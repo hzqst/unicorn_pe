@@ -27,3 +27,8 @@ void EmuExFreePoolWithTag(uc_engine *uc, uint64_t address, uint32_t size, void *
 void EmuIoAllocateMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuMmProbeAndLockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuMmMapLockedPagesSpecifyCache(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeQueryActiveProcessors(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeSetSystemAffinityThread(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeRevertToUserAffinityThread(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);

@@ -33,14 +33,25 @@ typedef struct AllocBlock_s
 	bool free;
 }AllocBlock_t;
 
+typedef struct MemMappingBlock_s
+{
+	MemMappingBlock_s(ULONG64 v, ULONG64 val, ULONG s) : va(v), value(val), size(s) {
+
+	}
+	ULONG64 va;
+	ULONG64 value;
+	ULONG size;
+}MemMappingBlock_t;
+
 typedef struct MemMapping_s
 {
-	MemMapping_s(ULONG64 b, uint64_t v, ULONG s) : baseva(b), mappedva(v), size(s) {
+	MemMapping_s(ULONG64 b, ULONG64 v, ULONG s) : baseva(b), mappedva(v), size(s) {
 		
 	}
 	ULONG64 baseva;
 	ULONG64 mappedva;
 	ULONG size;
+	std::vector<MemMappingBlock_t> blocks;
 }MemMapping_t;
 
 class PeEmulation
@@ -70,7 +81,7 @@ public:
 
 	void MapImageToEngine(const std::wstring &ImageName, PVOID ImageBase, ULONG ImageSize, ULONG64 MappedBase);
 	bool FindAddressInRegion(ULONG64 address, std::stringstream &RegionName);
-	bool FindAddressInMemMappings(ULONG64 baseaddress, ULONG64 &mapaddress);
+	bool WriteMemMapping(ULONG64 baseaddress, ULONG64 value, ULONG size);
 	bool FindAPIByAddress(ULONG64 address, std::wstring &DllName, FakeAPI_t **api);
 	bool FindModuleByAddress(ULONG64 address, ULONG64 &DllBase);
 	bool RegisterAPIEmulation(const std::wstring &DllName, const char *ProcedureName, void *callback, int argsCount);
@@ -81,11 +92,12 @@ public:
 	NTSTATUS LdrFindDllByName(const std::wstring &DllName, ULONG64 *ImageBase, ULONG *ImageSize, bool LoadIfNotExist);
 	NTSTATUS LdrLoadDllByName(const std::wstring &DllName, ULONG64 *ImageBase, ULONG *ImageSize);
 
-	ULONG64 HeapAlloc(ULONG Bytes);
+	ULONG64 HeapAlloc(ULONG Bytes, bool IsPageAlign = false);
 	bool HeapFree(ULONG64 FreeAddress);
 	bool CreateMemMapping(ULONG64 BaseAddress, ULONG64 MapAddress, ULONG Bytes);
-	void DeleteMemMapping(ULONG64 BaseAddress);
+	void DeleteMemMapping(ULONG64 MapAddress);
 public:
+	blackbone::Process thisProc;
 	csh m_cs;
 	uc_engine *m_uc;
 	bool m_IsWin64;
@@ -120,7 +132,6 @@ public:
 	uint64_t m_LastRip;
 	uint64_t m_LastRipModule;
 	uint64_t m_ExecCodeCount;
-	blackbone::Process thisProc;
 };
 
 #define API_FUNCTION_SIZE 8

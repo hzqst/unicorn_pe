@@ -424,7 +424,7 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 				}
 			}
 			newMods->Modules[numberNewMods].ImageBase = (PVOID)ctx->m_ImageBase;
-			newMods->Modules[numberNewMods].ImageSize = ctx->m_ImageEnd - ctx->m_ImageBase;
+			newMods->Modules[numberNewMods].ImageSize = (ULONG)(ctx->m_ImageEnd - ctx->m_ImageBase);
 			newMods->Modules[numberNewMods].LoadCount = 1;
 			newMods->Modules[numberNewMods].LoadOrderIndex = newMods->Modules[numberNewMods - 1].LoadOrderIndex + 1;
 			numberNewMods++;
@@ -490,7 +490,7 @@ void EmuIoAllocateMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user
 
 	uc_reg_write(uc, UC_X86_REG_RAX, &mdl_base);
 
-	*outs << "IoAllocateMdl va " << std::hex << rcx << ", len " << edx << ", return mdl " << mdl_base << "\n";
+	*outs << "IoAllocateMdl va " << std::hex << rcx << ", len " << std::dec << edx << ", return mdl " << std::hex << mdl_base << "\n";
 }
 
 void EmuMmProbeAndLockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -506,7 +506,7 @@ void EmuMmProbeAndLockPages(uc_engine *uc, uint64_t address, uint32_t size, void
 	uint32_t r8d;
 	uc_reg_read(uc, UC_X86_REG_R8D, &r8d);
 
-	*outs << "MmProbeAndLockPages mdl " << std::hex << rcx << ", AccessMode " << edx << ", Operation " << r8d << "\n";
+	*outs << "MmProbeAndLockPages mdl " << std::hex << rcx << ", AccessMode " << std::dec << edx << ", Operation " << std::dec << r8d << "\n";
 }
 
 void EmuMmMapLockedPagesSpecifyCache(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -528,13 +528,76 @@ void EmuMmMapLockedPagesSpecifyCache(uc_engine *uc, uint64_t address, uint32_t s
 	MDL mdl = { 0 };
 	uc_mem_read(uc, rcx, &mdl, sizeof(mdl));
 
-	uint64_t alloc = ctx->HeapAlloc(mdl.ByteCount);
+	uint64_t alloc = ctx->HeapAlloc(mdl.ByteCount, true);
 
 	mdl.MappedSystemVa = (PVOID)alloc;
 	uc_mem_write(uc, rcx, &mdl, sizeof(mdl));
 
 	ctx->CreateMemMapping((ULONG64)mdl.StartVa, (ULONG64)mdl.MappedSystemVa, mdl.ByteCount);
 
-	*outs << "MmMapLockedPagesSpecifyCache mdl " << std::hex << rcx << ", AccessMode " << edx << ", CacheType " << r8d << ", RequestedAddress " << r9 << "\n";
-	*outs << "return va " << alloc << "\n";
+	*outs << "MmMapLockedPagesSpecifyCache mdl " << std::hex << rcx << ", AccessMode " << std::dec << edx << 
+		", CacheType " << std::dec << r8d << ", RequestedAddress " << std::hex << r9 << "\n";
+	*outs << "return va " << std::hex << alloc << "\n";
+
+	uc_reg_write(uc, UC_X86_REG_RAX, &alloc);
+}
+
+void EmuKeQueryActiveProcessors(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t ret = 1;
+
+	*outs << "KeQueryActiveProcessors return " << std::dec << ret << "\n";
+
+	uc_reg_write(uc, UC_X86_REG_RAX, &ret);
+}
+
+void EmuKeSetSystemAffinityThread(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	*outs << "KeSetSystemAffinityThread Affinity " << std::hex << rcx << "\n";
+}
+
+void EmuKeRevertToUserAffinityThread(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	*outs << "KeRevertToUserAffinityThread\n";
+}
+
+void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	MDL mdl = { 0 };
+	uc_mem_read(uc, rcx, &mdl, sizeof(mdl));
+
+	if(!ctx->HeapFree((ULONG64)mdl.MappedSystemVa))
+	{
+		*outs << "MmUnlockPages failed to free mapped va " << std::hex << (ULONG64)mdl.MappedSystemVa << "\n";
+	}
+
+	ctx->DeleteMemMapping((ULONG64)mdl.MappedSystemVa);
+
+	*outs << "MmUnlockPages mdl " << std::hex << rcx << "\n";
+}
+
+void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	ctx->HeapFree(rcx);
+
+	*outs << "IoFreeMdl free " << std::hex << rcx << "\n";
 }
