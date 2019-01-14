@@ -395,10 +395,11 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 	memset(buf, 0, r8d);
 
 	ULONG retlen = 0;
-
+	
 	uint32_t eax = (uint32_t)NtQuerySystemInformation((SYSTEM_INFORMATION_CLASS)ecx, buf, r8d, &retlen);
 
-	retlen += sizeof(RTL_PROCESS_MODULE_INFORMATION);
+	if (ecx == (uint32_t)SystemModuleInformation)
+		retlen += sizeof(RTL_PROCESS_MODULE_INFORMATION);
 
 	if (eax == STATUS_INFO_LENGTH_MISMATCH)
 	{
@@ -445,7 +446,15 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 			free(newMods);
 
 		}
+		else if (ecx == (uint32_t)SystemKernelDebuggerInformation)
+		{
+			SYSTEM_KERNEL_DEBUGGER_INFORMATION info;
+			info.DebuggerEnabled = FALSE;
+			info.DebuggerNotPresent = TRUE;
+			uc_mem_write(uc, rdx, &info, sizeof(info));
+		}
 	}
+
 	if (r9 != 0)
 	{
 		uc_mem_write(uc, r9, &retlen, sizeof(retlen));
@@ -456,6 +465,21 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 	*outs << "NtQuerySystemInformation class " << std::dec << ecx << " return " << std::hex << eax << "\n";
 
 	err = uc_reg_write(uc, UC_X86_REG_EAX, &eax);
+}
+
+void EmuExFreePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t alloc = 0;
+
+	uint64_t rcx;
+	auto err = uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	if(!ctx->HeapFree(rcx))
+		*outs << "ExFreePool failed to free " << std::hex << rcx << "\n";
+	else
+		*outs << "ExFreePool free " << std::hex << rcx << "\n";
 }
 
 void EmuExFreePoolWithTag(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -470,9 +494,10 @@ void EmuExFreePoolWithTag(uc_engine *uc, uint64_t address, uint32_t size, void *
 	uint32_t edx;
 	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
 
-	ctx->HeapFree(rcx);
-
-	*outs << "ExFreePoolWithTag free " << std::hex << rcx << "\n";
+	if (!ctx->HeapFree(rcx))
+		*outs << "ExFreePoolWithTag failed to free " << std::hex << rcx << "\n";	
+	else
+		*outs << "ExFreePoolWithTag free " << std::hex << rcx << "\n";
 }
 
 void EmuIoAllocateMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -627,4 +652,25 @@ void EmuRtlGetVersion(uc_engine *uc, uint64_t address, uint32_t size, void *user
 	*outs << "RtlGetVersion return " << std::dec << st << "\n";
 
 	uc_reg_write(uc, UC_X86_REG_RAX, &st);
+}
+
+void EmuDbgPrint(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	std::string str, wstra;
+	EmuReadNullTermString(uc, rcx, str);
+
+	std::wstring wstr;
+	EmuReadNullTermUnicodeString(uc, rdx, wstr);
+
+	UnicodeToANSI(wstr, wstra);
+
+	*outs << "DbgPrint " << str << "\n";
 }

@@ -543,7 +543,7 @@ static void RwxCallback(uc_engine *uc, uc_mem_type type,
 		}
 		if (ctx->WriteMemMapping(address, value, size))
 		{
-			*outs << "write to mapping address " << address << "\n";
+			//*outs << "write to mapping address " << address << "\n";
 		}
 		break;
 	}
@@ -985,6 +985,7 @@ int main(int argc, char **argv)
 	{
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "ExAllocatePool", EmuExAllocatePool, 2);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "NtQuerySystemInformation", EmuNtQuerySystemInformation, 4);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "ExFreePool", EmuExFreePool, 1);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "ExFreePoolWithTag", EmuExFreePoolWithTag, 2);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoAllocateMdl", EmuIoAllocateMdl, 5);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmProbeAndLockPages", EmuMmProbeAndLockPages, 3); 
@@ -995,6 +996,7 @@ int main(int argc, char **argv)
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "MmUnlockPages", EmuMmUnlockPages, 1);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "IoFreeMdl", EmuIoFreeMdl, 1);
 		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "RtlGetVersion", EmuRtlGetVersion, 1);
+		ctx.RegisterAPIEmulation(L"ntoskrnl.exe", "DbgPrint", EmuDbgPrint, 1);
 	}
 
 	_CONTEXT reg64;
@@ -1065,7 +1067,7 @@ int main(int argc, char **argv)
 
 	if(ctx.m_LastRip == ctx.m_ImageEnd)
 		*outs << "entrypoint return: " << std::hex << reg64.Rax << "\n";
-	*outs << "last rip: " << ctx.m_LastRip;
+	*outs << "last rip: " << std::hex << ctx.m_LastRip;
 
 	std::stringstream rip_region;
 	if(ctx.FindAddressInRegion(ctx.m_LastRip, rip_region))

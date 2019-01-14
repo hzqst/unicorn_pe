@@ -23,6 +23,7 @@ void EmuRtlIsProcessorFeaturePresent(uc_engine *uc, uint64_t address, uint32_t s
 
 void EmuExAllocatePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuExFreePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuExFreePoolWithTag(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuIoAllocateMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuMmProbeAndLockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
@@ -33,3 +34,4 @@ void EmuKeRevertToUserAffinityThread(uc_engine *uc, uint64_t address, uint32_t s
 void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuRtlGetVersion(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuDbgPrint(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
