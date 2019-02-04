@@ -8,7 +8,7 @@ Some packed user-mode program might be executed incorrectly, since the environme
 
 I would be grateful if you figure out how to emulate them correctly.
 
-No support for exception. (x64 exception requires RtlDispatchException and InvertedTable to dispatch the expt. correctly, which is too complicated to emulate)
+No support for exception for now. (the Unicorn project does not support intercepting exception and determining what kind of exception/fault it is)
 
 ## Build
 Visual Studio 2017 are required.
