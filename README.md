@@ -10,6 +10,11 @@ I would be grateful if you figure out how to emulate them correctly.
 
 No support for exception for now. (the Unicorn project does not support intercepting exception and determining what kind of exception/fault it is)
 
+## TODO 
+Feature: Unpacking (VMProtect / Safengine) protected driver files. -- 99%
+Feature: Exception, SEH / VEH (wait for unicorn to support) -- 50%
+Feature: x86 (low priority) -- 0%
+
 ## Build
 Visual Studio 2017 are required.
 Note that you have to install VC++/ATL and WindowsSDK8.1 for VS2017 to be able to compile BlackBone.
