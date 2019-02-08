@@ -12,7 +12,9 @@ No support for exception for now. (the Unicorn project does not support intercep
 
 ## TODO 
 Feature: Unpacking (VMProtect / Safengine) protected driver files. -- 99%
+
 Feature: Exception, SEH / VEH (wait for unicorn to support) -- 50%
+
 Feature: x86 (low priority) -- 0%
 
 ## Build
