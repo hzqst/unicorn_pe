@@ -35,3 +35,16 @@ void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user
 void EmuIoFreeMdl(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuRtlGetVersion(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuDbgPrint(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeInitializeMutex(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuRtlInitUnicodeString(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeWaitForSingleObject(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuKeReleaseMutex(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void Emusrand(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void Emurand(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuRtlZeroMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuRtlCopyMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuRtlFillMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void Emuwcsstr(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuMmIsAddressValid(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuExGetPreviousMode(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void Emu__C_specific_handler(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);

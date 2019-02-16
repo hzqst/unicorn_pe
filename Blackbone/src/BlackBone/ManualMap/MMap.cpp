@@ -474,7 +474,9 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     // Make exception handling possible (C and C++)
     if (!(flags & NoExceptions))
     {
-        if (!NT_SUCCESS( status = EnableExceptions( pImage ) ) && status != STATUS_NOT_FOUND)
+        if (!NT_SUCCESS( status = EnableExceptions( pImage ) )
+			&& status != STATUS_NOT_FOUND
+			&& status != STATUS_INVALID_PARAMETER)
         {
             BLACKBONE_TRACE( L"ManualMap: Failed to enable exception handling for image %ls", ldrEntry.name.c_str() );
             pImage->peImage.Release();
@@ -908,7 +910,8 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
         if (!hMod)
         {
             BLACKBONE_TRACE( L"ManualMap: Failed to load dependency '%ls'. Status 0x%x", wstrDll.c_str(), hMod.status );
-            return hMod.status;
+            //return hMod.status;
+			continue;
         }
 
         for (auto& importFn : importMod.second)
@@ -967,6 +970,7 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
 
 				//Allow unresolved import
                 //return expData.status;
+				continue;
             }
 
 			if (expData.status == STATUS_SUCCESS)

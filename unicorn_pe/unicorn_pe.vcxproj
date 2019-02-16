@@ -139,7 +139,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -149,6 +148,7 @@
       <AdditionalIncludeDirectories>../unicorn/include/;../Blackbone/src/;../capstone/include/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -163,10 +163,12 @@
     <ClCompile Include="emuapi.cpp" />
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="encode.cpp" />
+    <ClCompile Include="except.cpp" />
     <ClCompile Include="unicorn_pe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emuapi.h" />
+    <ClInclude Include="iat.h" />
     <ClInclude Include="nativestructs.h" />
     <ClInclude Include="ucpe.h" />
   </ItemGroup>

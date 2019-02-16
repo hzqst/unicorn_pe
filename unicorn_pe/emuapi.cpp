@@ -368,7 +368,7 @@ void EmuExAllocatePool(uc_engine *uc, uint64_t address, uint32_t size, void *use
 	uint32_t edx;
 	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
 
-	alloc = ctx->HeapAlloc(edx);
+	alloc = ctx->HeapAlloc(edx, edx >= PAGE_SIZE);
 
 	*outs << "ExAllocatePool " << edx << " bytes, allocated at " << std::hex << alloc << "\n";
 
@@ -396,16 +396,22 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 
 	ULONG retlen = 0;
 	
-	uint32_t eax = (uint32_t)NtQuerySystemInformation((SYSTEM_INFORMATION_CLASS)ecx, buf, r8d, &retlen);
+	auto rax = (uint64_t)NtQuerySystemInformation((SYSTEM_INFORMATION_CLASS)ecx, buf, r8d, &retlen);
 
 	if (ecx == (uint32_t)SystemModuleInformation)
 		retlen += sizeof(RTL_PROCESS_MODULE_INFORMATION);
 
-	if (eax == STATUS_INFO_LENGTH_MISMATCH)
+	if (ecx == (uint32_t)SystemFirmwareTableInformation)
 	{
-
+		retlen = 0;
+		rax = STATUS_ACCESS_DENIED;
 	}
-	else if (eax == STATUS_SUCCESS)
+
+	if (rax == STATUS_INFO_LENGTH_MISMATCH)
+	{
+		
+	}
+	else if (rax == STATUS_SUCCESS)
 	{
 		if (ecx == (uint32_t)SystemModuleInformation)
 		{
@@ -462,9 +468,10 @@ void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size,
 
 	free(buf);
 
-	*outs << "NtQuerySystemInformation class " << std::dec << ecx << " return " << std::hex << eax << "\n";
+	*outs << "NtQuerySystemInformation class " << std::dec << ecx << " return " << std::hex << rax << "\n";
 
-	err = uc_reg_write(uc, UC_X86_REG_EAX, &eax);
+	//VMProtect 2.x use rax as ntstatus result 
+	uc_reg_write(uc, UC_X86_REG_RAX, &rax);
 }
 
 void EmuExFreePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
@@ -612,12 +619,12 @@ void EmuMmUnlockPages(uc_engine *uc, uint64_t address, uint32_t size, void *user
 	MDL mdl = { 0 };
 	uc_mem_read(uc, rcx, &mdl, sizeof(mdl));
 
+	ctx->DeleteMemMapping((ULONG64)mdl.MappedSystemVa);
+
 	if(!ctx->HeapFree((ULONG64)mdl.MappedSystemVa))
 	{
 		*outs << "MmUnlockPages failed to free mapped va " << std::hex << (ULONG64)mdl.MappedSystemVa << "\n";
 	}
-
-	ctx->DeleteMemMapping((ULONG64)mdl.MappedSystemVa);
 
 	*outs << "MmUnlockPages mdl " << std::hex << rcx << "\n";
 }
@@ -673,4 +680,219 @@ void EmuDbgPrint(uc_engine *uc, uint64_t address, uint32_t size, void *user_data
 	UnicodeToANSI(wstr, wstra);
 
 	*outs << "DbgPrint " << str << "\n";
+}
+
+void EmuKeInitializeMutex(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint32_t edx;
+	uc_reg_read(uc, UC_X86_REG_EDX, &edx);
+
+	*outs << "KeInitializeMutex Mutex " << std::hex << rcx << ", level " << edx << "\n";
+}
+
+void EmuRtlInitUnicodeString(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	std::wstring wstr;
+	EmuReadNullTermUnicodeString(uc, rdx, wstr);
+
+	std::string str;
+	UnicodeToANSI(wstr, str);
+
+	UNICODE_STRING ustr;
+	ustr.Buffer = (PWCH)rdx;
+	ustr.Length = (USHORT)wstr.length() * sizeof(WCHAR);
+	ustr.MaximumLength = (USHORT)(wstr.length() + 1) * sizeof(WCHAR);
+
+	uc_mem_write(uc, rcx, &ustr, sizeof(ustr));
+
+	*outs << "RtlInitUnicodeString DestString " << std::hex << rcx << ", SourceString " << str << "\n";
+}
+
+void EmuKeWaitForSingleObject(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint32_t edx;
+	uc_reg_read(uc, UC_X86_REG_EDX, &edx);
+
+	uint8_t r8b;
+	uc_reg_read(uc, UC_X86_REG_R8B, &r8b);
+
+	uint8_t r9b;
+	uc_reg_read(uc, UC_X86_REG_R9B, &r9b);
+
+	*outs << "KeWaitForSingleObject Object " << std::hex << rcx << ", WaitReason " << edx << ", WaitMode " << (int)r8b << ", Alertable " << (int)r9b << "\n";
+}
+
+void EmuKeReleaseMutex(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint8_t dl;
+	uc_reg_read(uc, UC_X86_REG_DL, &dl);
+
+	*outs << "KeReleaseMutex Object " << std::hex << rcx << ", Wait " << (int)dl << "\n";
+}
+
+void Emusrand(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint32_t ecx;
+	uc_reg_read(uc, UC_X86_REG_ECX, &ecx);
+
+	srand((unsigned int)ecx);
+
+	*outs << "srand " << ecx << "\n";
+}
+
+void Emurand(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	int eax = rand();
+
+	*outs << "rand return " << eax << "\n";
+}
+
+void EmuRtlZeroMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	virtual_buffer_t temp(rdx);
+	uc_mem_write(uc, rcx, temp.GetBuffer(), rdx);
+
+	*outs << "RtlZeroMemory " << std::hex << rcx << ", len " << rdx << "\n";
+}
+
+void EmuRtlFillMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	uint8_t r8b;
+	uc_reg_read(uc, UC_X86_REG_R8B, &r8b);
+
+	virtual_buffer_t temp(rdx);
+	memset(temp.GetBuffer(), r8b, rdx);
+	uc_mem_write(uc, rcx, temp.GetBuffer(), rdx);
+
+	*outs << "RtlFillMemory " << std::hex << rcx << ", len " << rdx << ", ch " << (int)r8b << "\n";
+}
+
+void EmuRtlCopyMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	uint64_t r8;
+	uc_reg_read(uc, UC_X86_REG_R8, &r8);
+
+	virtual_buffer_t temp(r8);
+	uc_mem_read(uc, rdx, temp.GetBuffer(), r8);
+	uc_mem_write(uc, rcx, temp.GetBuffer(), r8);
+
+	uc_reg_write(uc, UC_X86_REG_RAX, &rcx);
+
+	*outs << "RtlCopyMemory dst " << std::hex << rcx << ", src "<< rdx << ", len " << r8 << "\n";
+}
+
+void Emuwcsstr(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint64_t rdx;
+	uc_reg_read(uc, UC_X86_REG_RDX, &rdx);
+
+	std::wstring wstr1, wstr2;
+	EmuReadNullTermUnicodeString(uc, rcx, wstr1);
+	EmuReadNullTermUnicodeString(uc, rdx, wstr2);
+
+	std::string str1, str2;
+	UnicodeToANSI(wstr1, str1);
+	UnicodeToANSI(wstr2, str2);
+
+	auto ptr = wcsstr(wstr1.c_str(), wstr2.c_str());
+
+	uint64_t rax = ptr ? ((char *)ptr - (char *)wstr1.c_str()) + rcx : 0;
+
+	uc_reg_write(uc, UC_X86_REG_RAX, &rax);
+
+	*outs << "wcsstr String1 " << std::hex << rcx << " " << str1 
+		<< ", String2 " << rdx << " " << str2
+		<< ", return " << rax << "\n";
+}
+
+void EmuMmIsAddressValid(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint64_t rcx;
+	uc_reg_read(uc, UC_X86_REG_RCX, &rcx);
+
+	uint8_t test;
+	auto err = uc_mem_read(uc, rcx, &test, 1);
+
+	uint8_t al = (err == UC_ERR_READ_UNMAPPED) ? 0 : 1;
+
+	uc_reg_write(uc, UC_X86_REG_AL, &al);
+
+	*outs << "MmIsAddressValid address " << std::hex << rcx << ", return " << (int)al << "\n";
+}
+
+void EmuExGetPreviousMode(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	uint32_t eax = 0;
+	uc_reg_write(uc, UC_X86_REG_EAX, &eax);
+
+	*outs << "ExGetPreviousMode return " << std::hex << eax << "\n";
+}
+
+void Emu__C_specific_handler(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
+{
+	PeEmulation *ctx = (PeEmulation *)user_data;
+
+	ctx->m_ExecuteExceptionHandler = 1;
+
+	uc_emu_stop(uc);
 }

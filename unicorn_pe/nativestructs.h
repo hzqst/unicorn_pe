@@ -465,3 +465,114 @@ typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION
 	BOOLEAN DebuggerEnabled;
 	BOOLEAN DebuggerNotPresent;
 } SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
+
+typedef struct _KLDR_DATA_TABLE_ENTRY {
+	LIST_ENTRY InLoadOrderLinks;
+	PVOID ExceptionTable;
+	ULONG ExceptionTableSize;
+	// ULONG padding on IA64
+	PVOID GpValue;
+	PVOID NonPagedDebugInfo;
+	PVOID DllBase;
+	PVOID EntryPoint;
+	ULONG SizeOfImage;
+	UNICODE_STRING FullDllName;
+	UNICODE_STRING BaseDllName;
+	ULONG Flags;
+	USHORT LoadCount;
+	USHORT __Unused5;
+	PVOID SectionPointer;
+	ULONG CheckSum;
+	// ULONG padding on IA64
+	PVOID LoadedImports;
+	PVOID PatchInformation;
+} KLDR_DATA_TABLE_ENTRY, *PKLDR_DATA_TABLE_ENTRY;
+
+#define UNWIND_HISTORY_TABLE_NONE 0
+#define UNWIND_HISTORY_TABLE_GLOBAL 1
+#define UNWIND_HISTORY_TABLE_LOCAL 2
+
+#define MAXIMUM_INVERTED_FUNCTION_TABLE_SIZE 160
+
+typedef struct _INVERTED_FUNCTION_TABLE_ENTRY {
+	PRUNTIME_FUNCTION FunctionTable;
+	PVOID ImageBase;
+	ULONG SizeOfImage;
+	ULONG SizeOfTable;
+} INVERTED_FUNCTION_TABLE_ENTRY, *PINVERTED_FUNCTION_TABLE_ENTRY;
+
+typedef struct _INVERTED_FUNCTION_TABLE {
+	ULONG CurrentSize;
+	ULONG MaximumSize;
+	BOOLEAN Overflow;
+	INVERTED_FUNCTION_TABLE_ENTRY TableEntry[MAXIMUM_INVERTED_FUNCTION_TABLE_SIZE];
+} INVERTED_FUNCTION_TABLE, *PINVERTED_FUNCTION_TABLE;
+
+typedef enum _UNWIND_OP_CODES {
+	UWOP_PUSH_NONVOL = 0,
+	UWOP_ALLOC_LARGE,
+	UWOP_ALLOC_SMALL,
+	UWOP_SET_FPREG,
+	UWOP_SAVE_NONVOL,
+	UWOP_SAVE_NONVOL_FAR,
+	UWOP_SPARE_CODE1,
+	UWOP_SPARE_CODE2,
+	UWOP_SAVE_XMM128,
+	UWOP_SAVE_XMM128_FAR,
+	UWOP_PUSH_MACHFRAME
+} UNWIND_OP_CODES, *PUNWIND_OP_CODES;
+
+//
+// Define unwind code structure.
+//
+
+typedef union _UNWIND_CODE {
+	struct {
+		UCHAR CodeOffset;
+		UCHAR UnwindOp : 4;
+		UCHAR OpInfo : 4;
+	};
+
+	USHORT FrameOffset;
+} UNWIND_CODE, *PUNWIND_CODE;
+
+//
+// Define unwind information flags.
+//
+
+#define UNW_FLAG_NHANDLER 0x0
+#define UNW_FLAG_EHANDLER 0x1
+#define UNW_FLAG_UHANDLER 0x2
+#define UNW_FLAG_CHAININFO 0x4
+
+//
+// Define unwind information structure.
+//
+
+typedef struct _UNWIND_INFO {
+	UCHAR Version : 3;
+	UCHAR Flags : 5;
+	UCHAR SizeOfProlog;
+	UCHAR CountOfCodes;
+	UCHAR FrameRegister : 4;
+	UCHAR FrameOffset : 4;
+	UNWIND_CODE UnwindCode[1];
+
+	//
+	// The unwind codes are followed by an optional DWORD aligned field that
+	// contains the exception handler address or a function table entry if
+	// chained unwind information is specified. If an exception handler address
+	// is specified, then it is followed by the language specified exception
+	// handler data.
+	//
+	//  union {
+	//      struct {
+	//          ULONG ExceptionHandler;
+	//          ULONG ExceptionData[];
+	//      };
+	//
+	//      RUNTIME_FUNCTION FunctionEntry;
+	//  };
+	//
+
+} UNWIND_INFO, *PUNWIND_INFO;

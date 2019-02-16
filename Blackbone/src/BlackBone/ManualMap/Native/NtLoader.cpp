@@ -247,6 +247,8 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
     if (RtlInsertInvertedFunctionTable == 0 || LdrpInvertedFunctionTable == 0)
         return false;
 
+	auto imageBase = mod.imgPtr ? mod.imgPtr : mod.baseAddress;
+
     auto InsertP = [&]( auto table )
     {
         uint64_t result = 0;
@@ -255,17 +257,17 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
 
         memory.Read( LdrpInvertedFunctionTable, sizeof( table ), &table );
         for (ULONG i = 0; i < table.Count; i++)
-            if (table.Entries[i].ImageBase == mod.baseAddress)
+            if (table.Entries[i].ImageBase == imageBase)
                 return true;
 
         a->GenPrologue();
 
         if (IsWindows8Point1OrGreater())
-            a->GenCall( RtlInsertInvertedFunctionTable, { mod.baseAddress, mod.size }, cc_fastcall );
+            a->GenCall( RtlInsertInvertedFunctionTable, { imageBase, mod.size }, cc_fastcall );
         else if (IsWindows8OrGreater())
-            a->GenCall( RtlInsertInvertedFunctionTable, { mod.baseAddress, mod.size } );
+            a->GenCall( RtlInsertInvertedFunctionTable, { imageBase, mod.size } );
         else
-            a->GenCall( RtlInsertInvertedFunctionTable, { LdrpInvertedFunctionTable, mod.baseAddress, mod.size } );
+            a->GenCall( RtlInsertInvertedFunctionTable, { LdrpInvertedFunctionTable, imageBase, mod.size } );
 
         _process.remote().AddReturnWithEvent( *a );
         a->GenEpilogue();
@@ -275,12 +277,12 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
 
         for (DWORD i = 0; i < table.Count; i++)
         {
-            if (table.Entries[i].ImageBase != mod.baseAddress)
+            if (table.Entries[i].ImageBase != imageBase)
                 continue;
 
             // If Image has SAFESEH, RtlInsertInvertedFunctionTable is enough
-            if (table.Entries[i].SizeOfTable != 0)
-                return mod.safeSEH = true;
+			if (table.Entries[i].SizeOfTable != 0)
+				return mod.safeSEH = true;
 
             //
             // Create fake Exception directory

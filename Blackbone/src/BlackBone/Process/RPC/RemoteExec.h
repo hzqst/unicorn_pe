@@ -224,6 +224,7 @@ private:
     MemBlock  _userCode;        // Codecave for code execution
     MemBlock  _userData;        // Region to store copied structures and strings
     bool      _apcPatched;      // KiUserApcDispatcher was patched
+	int _refcount;
 };
 
 
