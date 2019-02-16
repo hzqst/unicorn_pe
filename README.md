@@ -8,7 +8,14 @@ Some packed user-mode program might be executed incorrectly, since the environme
 
 I would be grateful if you figure out how to emulate them correctly.
 
-No support for exception. (x64 exception requires RtlDispatchException and InvertedTable to dispatch the expt. correctly, which is too complicated to emulate)
+No support for exception for now. (the Unicorn project does not support intercepting exception and determining what kind of exception/fault it is)
+
+## TODO 
+Feature: Unpacking (VMProtect / Safengine) protected driver files. -- 99%
+
+Feature: Exception, SEH / VEH (wait for unicorn to support) -- 50%
+
+Feature: x86 (low priority) -- 0%
 
 ## Build
 Visual Studio 2017 are required.
@@ -21,6 +28,10 @@ Build project "unicorn_pe" as x64/Release or x64/Debug. (No x86 support for now)
 ## Usage
 
 unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm for displaying disasm]
+
+## Programming
+
+...to be documented
 
 ## Snapshots
 
