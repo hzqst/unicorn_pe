@@ -42,6 +42,9 @@ unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm
 ### vmprotect goes back to original entry point
 ![4](https://github.com/hzqst/unicorn_pe/raw/master/img/img4.png)
 
+### vmprotect packed DLL, full user-mode emulation.
+![4](https://github.com/hzqst/unicorn_pe/raw/master/img/img5.png)
+
 ## License
 This software is released under the MIT License, see LICENSE.
 
