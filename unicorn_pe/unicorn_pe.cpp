@@ -310,8 +310,17 @@ NTSTATUS PeEmulation::LdrFindDllByName(const std::wstring &DllName, ULONG64 *Ima
 
 	std::wstring newDllName = DllName;
 
-	if (!_wcsicmp(newDllName.c_str(), L"NTOSKRNL.DLL")) {
+	if (!_wcsicmp(newDllName.c_str(), L"NTOSKRNL.DLL"))
+	{
 		newDllName = L"NTOSKRNL.EXE";
+	}
+
+	if (newDllName.find(L".") == std::wstring::npos)
+	{
+		if(m_IsKernel)
+			newDllName += L".SYS";
+		else
+			newDllName += L".DLL";
 	}
 
 	auto moduleptr = thisProc.modules().GetModule(newDllName, ManualOnly, mt_default);
@@ -342,7 +351,7 @@ NTSTATUS PeEmulation::LdrLoadDllByName(const std::wstring &DllName, ULONG64 *Ima
 
 	if (!MapResult.success())
 	{
-		printf("LdrLoadDllByName failed to MapImage %ws\n", DllName.c_str());
+		printf("LdrLoadDllByName failed to MapImage %ws, status %08X\n", DllName.c_str(), MapResult.status);
 		return MapResult.status;
 	}
 
@@ -473,6 +482,10 @@ static void IntrCallback(uc_engine *uc, int exception, void *user_data)
 	if (exception == EXCP01_DB)
 	{
 		ctx->m_LastException = STATUS_SINGLE_STEP;
+	}
+	else if (exception == EXCP03_INT3)
+	{
+		ctx->m_LastException = STATUS_BREAKPOINT;
 	}
 	else
 	{
@@ -790,19 +803,19 @@ void PeEmulation::InitTebPeb()
 	PEB peb = { 0 };
 
 	m_PebBase = 0x90000ull;
-	m_PebEnd = m_PebBase + PAGE_ALIGN(sizeof(PEB) + PAGE_SIZE);
+	m_PebEnd = m_PebBase + AlignSize(sizeof(PEB), PAGE_SIZE);
 
-	uc_mem_map(m_uc, m_PebBase, PAGE_ALIGN(sizeof(PEB)), UC_PROT_READ);
+	uc_mem_map(m_uc, m_PebBase, m_PebEnd - m_PebBase, UC_PROT_READ);
 	uc_mem_write(m_uc, m_PebBase, &peb, sizeof(PEB));
 
 	m_TebBase = 0x80000ull;
-	m_TebEnd = m_TebBase + PAGE_ALIGN(sizeof(TEB) + PAGE_SIZE);
+	m_TebEnd = m_TebBase + AlignSize(sizeof(TEB), PAGE_SIZE);
 
 	TEB teb = { 0 };
 
 	teb.ProcessEnvironmentBlock = (PPEB)m_PebBase;
 
-	uc_mem_map(m_uc, m_TebBase, PAGE_ALIGN(sizeof(TEB)), UC_PROT_READ);
+	uc_mem_map(m_uc, m_TebBase, m_TebEnd - m_TebBase, UC_PROT_READ);
 	uc_mem_write(m_uc, m_TebBase, &teb, sizeof(TEB));
 
 	uc_x86_msr msr;
@@ -1188,6 +1201,7 @@ int main(int argc, char **argv)
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "GetCurrentProcessId", EmuGetCurrentProcessId, 0);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "QueryPerformanceCounter", EmuQueryPerformanceCounter, 1);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "LoadLibraryExW", EmuLoadLibraryExW, 3);
+		ctx.RegisterAPIEmulation(L"kernel32.dll", "LoadLibraryA", EmuLoadLibraryA, 1);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "GetProcAddress", EmuGetProcAddress, 2);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "GetModuleHandleA", EmuGetModuleHandleA, 1);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "GetLastError", EmuGetLastError, 0);
@@ -1198,11 +1212,13 @@ int main(int argc, char **argv)
 
 		ctx.RegisterAPIEmulation(L"ntdll.dll", "RtlDeleteCriticalSection", EmuDeleteCriticalSection, 1);
 		ctx.RegisterAPIEmulation(L"ntdll.dll", "RtlIsProcessorFeaturePresent", EmuRtlIsProcessorFeaturePresent, 1);
+		ctx.RegisterAPIEmulation(L"kernel32.dll", "GetProcessAffinityMask", EmuGetProcessAffinityMask, 1);
 
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "TlsAlloc", EmuTlsAlloc, 0);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "TlsSetValue", EmuTlsSetValue, 2);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "TlsFree", EmuTlsFree, 1);
 		ctx.RegisterAPIEmulation(L"kernel32.dll", "LocalAlloc", EmuLocalAlloc, 2);
+		ctx.RegisterAPIEmulation(L"ntdll.dll", "NtProtectVirtualMemory", EmuNtProtectVirtualMemory, 5);
 	}
 	else
 	{
@@ -1241,6 +1257,8 @@ int main(int argc, char **argv)
 	memset(&ctx.m_InitReg, 0, sizeof(ctx.m_InitReg));
 	ctx.m_InitReg.Rsp = ctx.m_StackEnd - 64;
 
+	ctx.InitProcessorState();
+
 	if (!ctx.m_IsKernel)
 	{
 		ctx.InitTebPeb();
@@ -1258,8 +1276,7 @@ int main(int argc, char **argv)
 		ctx.m_InitReg.Rcx = ctx.m_DriverObjectBase;
 		ctx.m_InitReg.Rdx = 0;
 	}
-
-	ctx.InitProcessorState();
+	
 	ctx.InitKSharedUserData();	
 
 	//return to image end when entrypoint is executed

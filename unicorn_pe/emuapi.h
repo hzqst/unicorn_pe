@@ -9,6 +9,7 @@ void EmuGetCurrentThreadId(uc_engine *uc, uint64_t address, uint32_t size, void 
 void EmuGetCurrentProcessId(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuQueryPerformanceCounter(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuLoadLibraryExW(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuLoadLibraryA(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuGetProcAddress(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuGetModuleHandleA(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuGetLastError(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
@@ -20,6 +21,8 @@ void EmuTlsFree(uc_engine *uc, uint64_t address, uint32_t size, void *user_data)
 void EmuDeleteCriticalSection(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuLocalAlloc(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuRtlIsProcessorFeaturePresent(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuNtProtectVirtualMemory(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
+void EmuGetProcessAffinityMask(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 
 void EmuExAllocatePool(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
 void EmuNtQuerySystemInformation(uc_engine *uc, uint64_t address, uint32_t size, void *user_data);
