@@ -1,17 +1,14 @@
 # Unicorn PE
 Unicorn PE is an [unicorn](https://github.com/unicorn-engine/unicorn) based instrumentation project/framework designed to emulate code execution for windows PE files, especially packed ones.
 
-## Limitation 
-For now, only x64 PE files are supported.
+## Feature
+Dump PE image from emu-memory into file, fix import table, especially packed ones.
 
-Some packed user-mode program might be executed incorrectly, since the environment is not fully emulated. (PEB TEB or some other stuffs)
+Partial support for exception. (only #DB and #BP)
 
-I would be grateful if you figure out how to emulate them correctly.
+Show disasm for all instructions that is being executed.
 
-Partial support for exception. (only single step)
-
-## TODO 
-Feature: Exception, SEH / VEH  --- 90%
+## TODO
 
 Feature: x86 (low priority) -- 0%
 
