@@ -42,6 +42,6 @@
 /.vs/unicorn_pe/v16
 /.vs/unicon_pre_2019build/v16
 /.vs/**
-
-
+/build/
+/obj/
 !Blackbone/**
