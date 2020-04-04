@@ -16,6 +16,7 @@
 #include "nativestructs.h"
 #include "ucpe.h"
 #include "emuapi.h"
+using namespace blackbone;
 
 #pragma comment(lib,"ntdll.lib")
 
@@ -46,20 +47,20 @@ bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str);
 blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* context, blackbone::Process& /*process*/, const blackbone::ModuleData& modInfo)
 {
 	PeEmulation *ctx = (PeEmulation *)context;
-	if (type == blackbone::ImageCallback)
+	if (type == blackbone::PreCallback)
 	{
 		uint64_t desiredBase = ctx->m_LoadModuleBase;
 		uint64_t desiredNextLoadBase = PAGE_ALIGN_64k((uint64_t)ctx->m_LoadModuleBase + (uint64_t)modInfo.size + 0x10000ull);
 		ctx->m_LoadModuleBase = desiredNextLoadBase;
 
-		return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None, desiredBase);
+		return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None);
 	}
 	else if (type == blackbone::PostCallback)
 	{
-		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.imgPtr, modInfo.size, modInfo.baseAddress, modInfo.entryPoint);
+		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.baseAddress, modInfo.size, modInfo.baseAddress, ((LDR_DATA_TABLE_ENTRY_BASE_T*)(modInfo.ldrPtr))->EntryPoint);
 	}
 
-	return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None, 0);
+	return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None);
 };
 
 void PeEmulation::AddAPIEmulation(FakeAPI_t *r, void *callback, int argsCount)
@@ -323,7 +324,7 @@ NTSTATUS PeEmulation::LdrFindDllByName(const std::wstring &DllName, ULONG64 *Ima
 			newDllName += L".DLL";
 	}
 
-	auto moduleptr = thisProc.modules().GetModule(newDllName, ManualOnly, mt_default);
+	auto moduleptr = thisProc.modules().GetModule(newDllName, blackbone::eModSeachType::PEHeaders, mt_default);
 
 	if (moduleptr)
 	{
@@ -346,7 +347,7 @@ NTSTATUS PeEmulation::LdrLoadDllByName(const std::wstring &DllName, ULONG64 *Ima
 	using namespace blackbone;
 
 	auto MapResult = thisProc.mmap().MapImage(DllName,
-		ManualImports | NoSxS | NoDelayLoad| NoExceptions | NoTLS | NoExec,
+		ManualImports | NoSxS | NoDelayLoad| NoExceptions | NoTLS | NoExceptions,
 		ManualMapCallback, this);
 
 	if (!MapResult.success())
@@ -1179,18 +1180,18 @@ int main(int argc, char **argv)
 	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, (ctx.m_IsKernel) ? UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC : UC_PROT_READ | UC_PROT_WRITE);
 
 	auto MapResult = ctx.thisProc.mmap().MapImage(wfilename,
-		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExec,
-		ManualMapCallback, &ctx, nullptr, 0);
+		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExceptions,
+		ManualMapCallback, &ctx, 0);
 
 	if (!MapResult.success())
 	{
 		printf("failed to MapImage\n");
 		return 0;
 	}
-
+    // LDR_DATA_TABLE_ENTRY_BASE_T* p= MapResult.result()->
 	ctx.m_ImageBase = MapResult.result()->baseAddress;
 	ctx.m_ImageEnd = MapResult.result()->baseAddress + MapResult.result()->size;
-	ctx.m_ImageEntry = MapResult.result()->entryPoint;
+	ctx.m_ImageEntry =((LDR_DATA_TABLE_ENTRY_BASE_T*)(MapResult.result()->ldrPtr))->EntryPoint;
 	ctx.m_LastRipModule = ctx.m_ImageBase;
 	ctx.m_ExecuteFromRip = ctx.m_ImageEntry;
 

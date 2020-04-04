@@ -1,0 +1,2 @@
+C:\Users\Administrator\Desktop\unicon_pre_2019build\build\x64\Debug\BlackBone.pdb
+C:\Users\Administrator\Desktop\unicon_pre_2019build\obj\x64\Debug\BlackBone\BlackBone.pdb

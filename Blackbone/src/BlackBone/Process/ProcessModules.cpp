@@ -65,19 +65,13 @@ ModuleDataPtr ProcessModules::GetModule(
 {
     NameResolve::Instance().ResolvePath( name, Utils::StripPath( baseModule ), L"", NameResolve::ApiSchemaOnly, _proc );
 
-	// Detect module type
-	if (type == mt_default)
-		type = _proc.barrier().targetWow64 ? mt_mod32 : mt_mod64;
+    // Detect module type
+    if (type == mt_default)
+        type = _proc.barrier().targetWow64 ? mt_mod32 : mt_mod64;
 
-	auto key = std::make_pair(name, type);
+    CSLock lck( _modGuard );
 
-	CSLock lck(_modGuard);
-
-	if (search == ManualOnly) {
-		if (_manual_modules.count(key))
-			return _manual_modules[key];
-		return nullptr;
-	}
+    auto key = std::make_pair( name, type );
 
     // Fast lookup
     if (_modules.count( key ) && (_modules[key]->manual || ValidateModule( _modules[key]->baseAddress )))
@@ -119,12 +113,6 @@ ModuleDataPtr ProcessModules::GetModule(
         else
             return (modBase >= val.second->baseAddress && modBase < val.second->baseAddress + val.second->size);
     };
-
-	if (search == ManualOnly) {
-		auto iter = std::find_if(_manual_modules.begin(), _manual_modules.end(), compFn);
-		if (iter != _manual_modules.end())
-			return iter->second;
-	}
 
     auto iter = std::find_if( _modules.begin(), _modules.end(), compFn );
 
@@ -233,10 +221,8 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
 {
     exportData data;
 
-	auto imageBase = (hMod.imgPtr) ? hMod.imgPtr : hMod.baseAddress;
-
     // Invalid module
-    if (imageBase == 0)
+    if (hMod.baseAddress == 0)
         return STATUS_INVALID_PARAMETER_1;
 
     std::unique_ptr<IMAGE_EXPORT_DIRECTORY, decltype(&free)> expData( nullptr, &free );
@@ -248,12 +234,12 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
     DWORD expSize = 0;
     uintptr_t expBase = 0;
 
-    _memory.Read(imageBase, sizeof( hdrDos ), &hdrDos );
+    _memory.Read( hMod.baseAddress, sizeof( hdrDos ), &hdrDos );
 
     if (hdrDos.e_magic != IMAGE_DOS_SIGNATURE)
         return STATUS_INVALID_IMAGE_NOT_MZ;
 
-    _memory.Read(imageBase + hdrDos.e_lfanew, sizeof( IMAGE_NT_HEADERS64 ), &hdrNt32 );
+    _memory.Read( hMod.baseAddress + hdrDos.e_lfanew, sizeof( IMAGE_NT_HEADERS64 ), &hdrNt32 );
 
     if (phdrNt32->Signature != IMAGE_NT_SIGNATURE)
         return STATUS_INVALID_IMAGE_FORMAT;
@@ -274,7 +260,7 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
         expData.reset( reinterpret_cast<IMAGE_EXPORT_DIRECTORY*>(malloc( expSize )) );
         IMAGE_EXPORT_DIRECTORY* pExpData = expData.get();
 
-        if( auto status = _memory.Read(imageBase + expBase, expSize, pExpData ); !NT_SUCCESS( status ) )
+        if( auto status = _memory.Read( hMod.baseAddress + expBase, expSize, pExpData ); !NT_SUCCESS( status ) )
             return status;
 
         // Fix invalid directory size
@@ -288,7 +274,7 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
 
             expData.reset( reinterpret_cast<IMAGE_EXPORT_DIRECTORY*>(malloc( expSize )) );
             pExpData = expData.get();
-            if (auto status = _memory.Read(imageBase + expBase, expSize, pExpData ); !NT_SUCCESS( status ))
+            if (auto status = _memory.Read( hMod.baseAddress + expBase, expSize, pExpData ); !NT_SUCCESS( status ))
                 return status;
         }
 
@@ -326,12 +312,12 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
                 data.procAddress = pAddressOfFuncs[OrdIndex] + hMod.baseAddress;
 
                 // Check forwarded export
-                if (pAddressOfFuncs[OrdIndex] >= expBase &&
-					pAddressOfFuncs[OrdIndex] <= expBase + expSize)
+                if (data.procAddress >= hMod.baseAddress + expBase &&
+                    data.procAddress <= hMod.baseAddress + expBase + expSize)
                 {
                     char forwardStr[255] = { 0 };
 
-                    _memory.Read( imageBase + pAddressOfFuncs[OrdIndex], sizeof( forwardStr ), forwardStr );
+                    _memory.Read( data.procAddress, sizeof( forwardStr ), forwardStr );
 
                     std::string chainExp( forwardStr );
 
@@ -512,11 +498,14 @@ call_result_t<ModuleDataPtr> ProcessModules::Inject( const std::wstring& path, T
     }
 
     // Retry with LoadLibrary if possible
-    if (!NT_SUCCESS( status ) && pLoadLibrary && sameArch)
-        status = _proc.remote().ExecDirect( pLoadLibrary->procAddress, modName->ptr() + ustrSize );
-
-    if (!NT_SUCCESS( status ))
-        return status;
+    if (!NT_SUCCESS(status) && pLoadLibrary && sameArch)
+    {
+        auto result = _proc.remote().ExecDirect( pLoadLibrary->procAddress, modName->ptr() + ustrSize );
+        if (result == 0)
+        {
+            return status;
+        }
+    }
 
     return GetModule( path, LdrList, img.mType() );
 }
@@ -551,9 +540,7 @@ NTSTATUS ProcessModules::Unload( const ModuleDataPtr& hMod )
     _proc.remote().ExecInNewThread( (*a)->make(), (*a)->getCodeSize(), res, threadSwitch );
 
     // Remove module from cache
-	auto key = std::make_pair(hMod->name, hMod->type);
-    _modules.erase( key);
-	_manual_modules.erase(key);
+    _modules.erase( std::make_pair( hMod->name, hMod->type ) );
     return true;
 }
 
@@ -597,19 +584,32 @@ bool ProcessModules::ValidateModule( module_t base )
 /// </summary>
 /// <param name="mod">Module data</param>
 /// <returns>Module info</returns>
-ModuleDataPtr ProcessModules::AddManualModule( ModuleData mod )
+ModuleDataPtr ProcessModules::AddManualModule( const ModuleData& mod )
 {
-    mod.fullPath = Utils::ToLower( std::move( mod.fullPath ) );
-    mod.name = Utils::ToLower( std::move( mod.name ) );
-    mod.manual = true;
+    auto canonicalized = Canonicalize( mod, true );
+    auto key = std::make_pair( canonicalized.name, canonicalized.type );
+    return _modules.emplace( key, std::make_shared<const ModuleData>( canonicalized ) ).first->second;
+}
 
-    auto key = std::make_pair( mod.name, mod.type );
+/// <summary>
+/// Canonicalize paths and set module type to manual if requested
+/// </summary>
+/// <param name="mod">Module data</param>
+/// <param name="manual">Value to set ModuleData::manual to</param>
+/// <returns>Module data</returns>
+ModuleData ProcessModules::Canonicalize( const ModuleData& mod, bool manual )
+{
+    ModuleData result = {};
 
-	auto shared_moddata = std::make_shared<const ModuleData>(mod);
-	_modules.emplace(key, shared_moddata);
-	_manual_modules.emplace(key, shared_moddata);
+    result.baseAddress = mod.baseAddress;
+    result.ldrPtr = mod.ldrPtr;
+    result.size = mod.size;
+    result.type = mod.type;
+    result.fullPath = Utils::ToLower( mod.fullPath );
+    result.name = Utils::ToLower( mod.name );
+    result.manual = manual;
 
-    return shared_moddata;
+    return result;
 }
 
 /// <summary>
@@ -622,8 +622,6 @@ void ProcessModules::RemoveManualModule( const std::wstring& filename, eModType 
     auto key = std::make_pair( Utils::ToLower( Utils::StripPath( filename ) ), mt );
     if (_modules.count( key ))
         _modules.erase( key );
-	if (_manual_modules.count(key))
-		_manual_modules.erase(key);
 }
 
 void ProcessModules::UpdateModuleCache( eModSeachType search, eModType type )

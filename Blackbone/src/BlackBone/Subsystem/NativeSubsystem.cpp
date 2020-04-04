@@ -468,8 +468,6 @@ std::vector<ModuleDataPtr> Native::EnumModulesT()
             data.type = (sizeof( T ) < sizeof( uint64_t )) ? mt_mod32 : mt_mod64;
             data.ldrPtr = static_cast<ptr_t>(head);
             data.manual = false;
-			data.imgPtr = 0;
-			data.entryPoint = 0;
 
             result.emplace_back( std::make_shared<const ModuleData>( data ) );
         }
@@ -566,8 +564,6 @@ std::vector<ModuleDataPtr> Native::EnumSections()
             data.baseAddress = mbi.AllocationBase;
             data.ldrPtr = 0;
             data.manual = false;
-			data.entryPoint = 0;
-			data.imgPtr = 0;
 
             result.emplace_back( std::make_shared<const ModuleData>( data ) );
         }
@@ -609,8 +605,6 @@ std::vector<ModuleDataPtr> Native::EnumPEHeaders()
         }
 
         ModuleData data;
-		data.entryPoint = 0;
-		data.imgPtr = 0;
 
         IMAGE_DOS_HEADER* phdrDos = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
         IMAGE_NT_HEADERS32 *phdrNt32 = nullptr;

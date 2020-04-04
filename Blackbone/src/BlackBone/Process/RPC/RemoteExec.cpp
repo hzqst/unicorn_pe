@@ -19,7 +19,6 @@ RemoteExec::RemoteExec( Process& proc )
     , _hWaitEvent( NULL )
     , _apcPatched( false )
 {
-	_refcount = 0;
 }
 
 RemoteExec::~RemoteExec()
@@ -83,7 +82,7 @@ NTSTATUS RemoteExec::ExecInNewThread(
 
     a->GenCall( _userCode.ptr(), { } );
     (*a)->mov( (*a)->zdx, _userData.ptr() + INTRET_OFFSET );
-    (*a)->mov( (*a)->zdx, (*a)->zax );
+    (*a)->mov( asmjit::host::dword_ptr( (*a)->zdx ), (*a)->zax );
     a->GenEpilogue( switchMode, 4 );
     
     // Execute code in newly created thread
@@ -319,8 +318,6 @@ NTSTATUS RemoteExec::CreateRPCEnvironment( WorkerThreadMode mode /*= Worker_None
 {
     DWORD thdID = GetTickCount();       // randomize thread id
     NTSTATUS status = STATUS_SUCCESS;
-
-	_refcount++;
 
     auto allocMem = [this]( auto& result, uint32_t size = 0x1000, DWORD prot = PAGE_EXECUTE_READWRITE ) -> NTSTATUS
     {
@@ -676,17 +673,13 @@ void RemoteExec::TerminateWorker()
 /// </summary>
 void RemoteExec::reset()
 {
-	--_refcount;
-	if (_refcount == 0)
-	{
-		TerminateWorker();
+    TerminateWorker();
 
-		_userCode.Reset();
-		_userData.Reset();
-		_workerCode.Reset();
+    _userCode.Reset();
+    _userData.Reset();
+    _workerCode.Reset();
 
-		_apcPatched = false;
-	}
+    _apcPatched = false;
 }
 
 }

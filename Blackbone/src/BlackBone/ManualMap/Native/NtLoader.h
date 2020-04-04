@@ -9,7 +9,6 @@
 
 namespace blackbone
 {
-
 enum LdrRefFlags
 {
     Ldr_None      = 0x00,   // Do not create any reference
@@ -25,6 +24,7 @@ ENUM_OPS( LdrRefFlags )
 struct NtLdrEntry : ModuleData
 {
     LdrRefFlags flags = Ldr_None;
+    ptr_t entryPoint = 0;
     ULONG hash = 0;
     bool safeSEH = false;
 };
@@ -33,7 +33,6 @@ class NtLdr
 {
 public:
     BLACKBONE_API NtLdr( class Process& proc );
-    BLACKBONE_API ~NtLdr( void );
 
     /// <summary>
     /// Initialize some loader stuff
@@ -163,7 +162,7 @@ private:
     /// <summary>
     /// Hash image name
     /// </summary>
-    /// <param name="str">Iamge name</param>
+    /// <param name="str">Image name</param>
     /// <returns>Hash</returns>
     ULONG HashString( const std::wstring& str );
 
@@ -189,7 +188,7 @@ private:
     /// </summary>
     /// <param name="mod">Module data</param>
     /// <returns>Address of removed record</returns>
-    template<typename T> 
+    template<typename T>
     ptr_t UnlinkFromLdr( const ModuleData& mod );
 
     /// <summary>
@@ -219,7 +218,7 @@ private:
     ptr_t UnlinkTreeNode( const ModuleData& mod, ptr_t ldrEntry, bool noThread = false );
 
     NtLdr( const NtLdr& ) = delete;
-    NtLdr& operator =(const NtLdr&) = delete;
+    NtLdr& operator =( const NtLdr& ) = delete;
 
 private:
     class Process& _process;                // Process memory routines
@@ -231,6 +230,4 @@ private:
     eModType _initializedFor = mt_unknown;  // Loader initialization target
     std::map<ptr_t, ptr_t> _nodeMap;        // Allocated native structures
 };
-
 }
-

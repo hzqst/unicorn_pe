@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+/.vs/unicon_pre_2019build/v16/Browse.VC.db
+/.vs/unicorn_pe/v16
+/.vs/unicon_pre_2019build/v16

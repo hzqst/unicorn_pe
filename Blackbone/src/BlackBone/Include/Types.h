@@ -46,7 +46,6 @@ enum eModSeachType
     LdrList,        // InLoadOrder list
     Sections,       // Scan for section objects
     PEHeaders,      // Scan for PE headers in memory
-	ManualOnly		//Search for manual load only
 };
 
 // Switch created wow64 thread to long mode
@@ -67,8 +66,8 @@ struct ModuleData
     eModType type;          // Module type
     ptr_t ldrPtr;           // LDR_DATA_TABLE_ENTRY_BASE_T address
     bool manual;            // Image is manually mapped
-	ptr_t entryPoint;  // Image entry point
-	module_t imgPtr;   // Image actual memory ptr
+
+
     bool operator ==(const ModuleData& other) const
     {
         return (baseAddress == other.baseAddress);
