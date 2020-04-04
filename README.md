@@ -8,15 +8,16 @@ Partial support for exception. (only #DB and #BP)
 
 Show disasm for all instructions that is being executed.
 
+Update BlackBone to latest ver (2020.4.5).
+
 ## TODO
 
 Feature: x86 (low priority) -- 0%
 
 ## Build
-Visual Studio 2017 are required.
-Note that you have to install VC++/ATL and WindowsSDK8.1 for VS2017 to be able to compile BlackBone.
+Visual Studio 2019 are required.
 
-Open unicorn_pe.sln with Visual Studio 2017
+Open unicorn_pe.sln with Visual Studio 2019
 
 Build project "unicorn_pe" as x64/Release or x64/Debug. (No x86 support for now)
 
