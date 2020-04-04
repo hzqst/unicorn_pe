@@ -22,7 +22,6 @@ public:
         EnsureFullPath  = 2,    // Make sure resulting path is full-qualified
         NoSearch        = 4,    // Don't perform file search, only resolve name
         Wow64           = 8,    // Redirect System32 files to SysWow64
-		KernelDriver	= 16,
     };
 
 public:

@@ -131,6 +131,13 @@ NTSTATUS BBLoadLocalImage( IN PUNICODE_STRING path, OUT PVOID* pBase );
 NTSTATUS BBCreateWorkerThread( IN PMMAP_CONTEXT pContext );
 
 /// <summary>
+/// Find suitable thread to be used as worker for user-mode calls
+/// </summary>
+/// <param name="pContext">Map context</param>
+/// <returns>Status code</returns>
+NTSTATUS BBFindWokerThread( IN PMMAP_CONTEXT pContext );
+
+/// <summary>
 /// Call arbitrary function
 /// </summary>
 /// <param name="newThread">Perform call in a separate thread</param>
@@ -174,7 +181,7 @@ PVOID BBImageManifest( IN PVOID pImageBase, OUT PULONG_PTR pSize, OUT PLONG pID 
 /// <param name="MappedAsImage">Image is mapped using image memory layout</param>
 /// <param name="imageBase">Image base</param>
 /// <returns>Translated address</returns>
-PVOID BBRvaToVa( IN ULONG rva, IN BOOLEAN MappedAsImage, IN IN PVOID imageBase );
+PVOID BBRvaToVa( IN ULONG rva, IN BOOLEAN MappedAsImage, IN PVOID imageBase );
 
 #pragma alloc_text(PAGE, BBMapUserImage)
 #pragma alloc_text(PAGE, BBFindOrMapModule)
@@ -233,8 +240,9 @@ NTSTATUS BBMapUserImage(
 
     DPRINT( "BlackBone: %s: Mapping image '%wZ' with flags 0x%X\n", __FUNCTION__, path, flags );
 
-    // Create worker
-    status = BBCreateWorkerThread( &context );
+    // Create or find worker thread
+    context.noThreads = (flags & KNoThreads) != 0;
+    status = context.noThreads ? BBFindWokerThread( &context ) : BBCreateWorkerThread( &context );
     if (NT_SUCCESS( status ))
     {
         SIZE_T mapSize = 0x2000;
@@ -494,6 +502,7 @@ NTSTATUS BBFindOrMapModule(
             ALLOCATE_FREE_MEMORY request = { 0 };
             ALLOCATE_FREE_MEMORY_RESULT mapResult = { 0 };
 
+            request.pid = (ULONG)(ULONG_PTR)PsGetProcessId( pProcess );
             request.allocate = TRUE;
             request.physical = TRUE;
             request.protection = PAGE_EXECUTE_READWRITE;
@@ -641,8 +650,22 @@ NTSTATUS BBFindOrMapModule(
         // Delete remote image
         if (pLocalImage->baseAddress)
         {
-            SIZE_T tmpSize = 0;
-            ZwFreeVirtualMemory( ZwCurrentProcess(), &pLocalImage->baseAddress, &tmpSize, MEM_RELEASE );
+            if (flags & KHideVAD)
+            {
+                ALLOCATE_FREE_MEMORY request = { 0 };
+                ALLOCATE_FREE_MEMORY_RESULT mapResult = { 0 };
+
+                request.pid = (ULONG)(ULONG_PTR)PsGetProcessId( pProcess );
+                request.allocate = FALSE;
+                request.physical = TRUE;
+
+                BBAllocateFreePhysical( pProcess, &request, &mapResult );
+            } 
+            else
+            {
+                SIZE_T tmpSize = 0;
+                ZwFreeVirtualMemory( ZwCurrentProcess(), &pLocalImage->baseAddress, &tmpSize, MEM_RELEASE );
+            }
         }
 
         RtlFreeUnicodeString( &pLocalImage->fullPath );
@@ -754,7 +777,7 @@ NTSTATUS BBResolveImageRefs(
                 pContext->userMem->status = STATUS_SUCCESS;
 
                 // Calling LdrLoadDll in worker thread breaks further APC delivery, so use new thread
-                BBCallRoutine( TRUE, pContext, pContext->pLoadImage, 4, NULL, NULL, &pContext->userMem->ustr, &pContext->userMem->ptr );
+                BBCallRoutine( !pContext->noThreads, pContext, pContext->pLoadImage, 4, NULL, NULL, &pContext->userMem->ustr, &pContext->userMem->ptr );
                 pModule.address = pContext->userMem->ptr;
                 if (!pModule.address)
                     status = pContext->userMem->status;
@@ -1683,6 +1706,16 @@ NTSTATUS BBCreateWorkerThread( IN PMMAP_CONTEXT pContext )
 }
 
 /// <summary>
+/// Find suitable thread to be used as worker for user-mode calls
+/// </summary>
+/// <param name="pContext">Map context</param>
+/// <returns>Status code</returns>
+NTSTATUS BBFindWokerThread( IN PMMAP_CONTEXT pContext )
+{
+    return BBLookupProcessThread( pContext->pProcess, &pContext->pWorker );
+}
+
+/// <summary>
 /// Call arbitrary function
 /// </summary>
 /// <param name="newThread">Perform call in a separate thread</param>
@@ -1710,7 +1743,7 @@ NTSTATUS BBCallRoutine( IN BOOLEAN newThread, IN PMMAP_CONTEXT pContext, IN PVOI
     else
     {
         KeResetEvent( pContext->pSync );
-        status = BBQueueUserApc( pContext->pWorker, pContext->userMem->code, NULL, NULL, NULL, FALSE );
+        status = BBQueueUserApc( pContext->pWorker, pContext->userMem->code, NULL, NULL, NULL, pContext->noThreads );
         if (NT_SUCCESS( status ))
         {
             LARGE_INTEGER timeout = { 0 };
@@ -1815,7 +1848,6 @@ PVOID BBImageManifest( IN PVOID pImageBase, OUT PULONG_PTR pSize, OUT PLONG pID 
     // 3 levels of nodes
     IMAGE_RESOURCE_DIRECTORY *pDirNodePtr1 = NULL;
     IMAGE_RESOURCE_DIRECTORY *pDirNodePtr2 = NULL;
-    IMAGE_RESOURCE_DIRECTORY *pDirNodePtr3 = NULL;
 
     // resource entry data
     IMAGE_RESOURCE_DATA_ENTRY  *pDataNode = NULL;
@@ -1865,7 +1897,6 @@ PVOID BBImageManifest( IN PVOID pImageBase, OUT PULONG_PTR pSize, OUT PLONG pID 
             // Check if this is a valid manifest resource
             if (pDirNode2->Id == 1 || pDirNode2->Id == 2 || pDirNode2->Id == 3)
             {
-                pDirNodePtr3 = (PIMAGE_RESOURCE_DIRECTORY)(secBase + pDirNode2->OffsetToDirectory);
                 ofst_3 = pDirNode2->OffsetToDirectory + sizeof( IMAGE_RESOURCE_DIRECTORY );
                 pDirNode3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(secBase + ofst_3);
                 pDataNode = (PIMAGE_RESOURCE_DATA_ENTRY)(secBase + pDirNode3->OffsetToData);

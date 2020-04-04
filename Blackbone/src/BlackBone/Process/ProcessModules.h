@@ -206,7 +206,15 @@ public:
     /// </summary>
     /// <param name="mod">Module data</param>
     /// <returns>Module info</returns>
-    BLACKBONE_API ModuleDataPtr AddManualModule( ModuleData mod );
+    BLACKBONE_API ModuleDataPtr AddManualModule( const ModuleData& mod );
+
+    /// <summary>
+    /// Canonicalize paths and set module type to manual if requested
+    /// </summary>
+    /// <param name="mod">Module data</param>
+    /// <param name="manual">Value to set ModuleData::manual to</param>
+    /// <returns>Module data</returns>
+    BLACKBONE_API ModuleData Canonicalize( const ModuleData& mod, bool manual );
 
     /// <summary>
     /// Remove module from module list
@@ -239,7 +247,6 @@ private:
     class ProcessCore&   _core;
 
     mapModules _modules;            // Fast lookup cache
-	mapModules _manual_modules;
     CriticalSection _modGuard;      // Module guard        
     bool _ldrPatched;               // Win7 loader patch flag
 };

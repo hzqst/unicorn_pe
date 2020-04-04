@@ -1,0 +1,3 @@
+﻿    正在创建库 C:\Users\Administrator\Desktop\new\x64\Debug\unicorn_pe.lib 和对象 C:\Users\Administrator\Desktop\new\x64\Debug\unicorn_pe.exp
+LINK : warning LNK4098: 默认库“LIBCMTD”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
+  unicorn_pe.vcxproj -> C:\Users\Administrator\Desktop\new\x64\Debug\unicorn_pe.exe

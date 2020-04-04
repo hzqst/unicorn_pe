@@ -343,7 +343,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS_EX
 	SystemProcessorPerformanceDistribution = 0x64,
 	SystemNumaProximityNodeInformation = 0x65,
 	SystemDynamicTimeZoneInformation = 0x66,
-	SystemCodeIntegrityInformation = 0x67,
+	SystemCodeIntegrityInformation_ = 0x67,
 	SystemProcessorMicrocodeUpdateInformation = 0x68,
 	SystemProcessorBrandString = 0x69,
 	SystemVirtualAddressInformation = 0x6a,

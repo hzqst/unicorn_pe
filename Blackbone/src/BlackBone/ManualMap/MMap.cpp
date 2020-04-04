@@ -39,11 +39,10 @@ call_result_t<ModuleDataPtr> MMap::MapImage(
     eLoadFlags flags /*= NoFlags*/,
     MapCallback mapCallback /*= nullptr*/,
     void* context /*= nullptr*/,
-    CustomArgs_t* pCustomArgs /*= nullptr*/,
-	ptr_t forceMapToAddr
+    CustomArgs_t* pCustomArgs /*= nullptr*/
     )
 {
-    return MapImageInternal( path, nullptr, 0, false, flags, mapCallback, context, pCustomArgs, forceMapToAddr);
+    return MapImageInternal( path, nullptr, 0, false, flags, mapCallback, context, pCustomArgs );
 }
 
 /// <summary>
@@ -62,15 +61,14 @@ call_result_t<ModuleDataPtr> MMap::MapImage(
     eLoadFlags flags /*= NoFlags*/,
     MapCallback mapCallback /*= nullptr*/,
     void* context /*= nullptr*/,
-    CustomArgs_t* pCustomArgs /*= nullptr*/,
-	ptr_t forceMapToAddr
+    CustomArgs_t* pCustomArgs /*= nullptr*/
     )
 {
     // Create fake path
     wchar_t path[64];
     wsprintfW( path, L"MemoryImage_0x%p", buffer );
 
-    return MapImageInternal( path, buffer, size, asImage, flags, mapCallback, context, pCustomArgs, forceMapToAddr);
+    return MapImageInternal( path, buffer, size, asImage, flags, mapCallback, context, pCustomArgs );
 }
 
 /// <summary>
@@ -91,13 +89,15 @@ call_result_t<ModuleDataPtr> MMap::MapImageInternal(
     eLoadFlags flags /*= NoFlags*/,
     MapCallback mapCallback /*= nullptr*/,
     void* context /*= nullptr*/,
-    CustomArgs_t* pCustomArgs /*= nullptr*/,
-	ptr_t forceMapToAddr
+    CustomArgs_t* pCustomArgs /*= nullptr*/
     )
 {
-    // Already loaded
-    if (auto hMod = _process.modules().GetModule( path, ManualOnly ))
-        return hMod;
+    if (!(flags & ForceRemap))
+    {
+        // Already loaded
+        if (auto hMod = _process.modules().GetModule(path))
+            return hMod;
+    }
 
     // Prepare target process
     auto mode = (flags & NoThreads) ? Worker_UseExisting : Worker_CreateNew;
@@ -123,7 +123,7 @@ call_result_t<ModuleDataPtr> MMap::MapImageInternal(
     BLACKBONE_TRACE( L"ManualMap: Mapping image '%ls' with flags 0x%x", path.c_str(), flags );
 
     // Map module and all dependencies
-    auto mod = FindOrMapModule( path, buffer, size, asImage, flags, forceMapToAddr);
+    auto mod = FindOrMapModule( path, buffer, size, asImage, flags );
     if (!mod)
     {
         Cleanup();
@@ -198,13 +198,10 @@ call_result_t<ModuleDataPtr> MMap::MapImageInternal(
             }
 
             // Don't run initializer for pure IL dlls
-			if (!(img->flags & NoExec))
-			{
-				if (!img->peImage.pureIL() || img->peImage.isExe())
-					status = RunModuleInitializers(img, DLL_PROCESS_ATTACH, pCustomArgs).status;
-			}
+            if (!img->peImage.pureIL() || img->peImage.isExe())
+                status = RunModuleInitializers( img, DLL_PROCESS_ATTACH, pCustomArgs ).status;
 
-			if (!NT_SUCCESS( status ))
+            if (!NT_SUCCESS( status ))
             {
                 BLACKBONE_TRACE( L"ManualMap: ModuleInitializers failed for '%ls', status: 0x%X", img->ldrEntry.name.c_str(), status );
                 Cleanup();
@@ -279,8 +276,7 @@ void MMap::FixManagedPath( ptr_t base, const std::wstring &path )
 call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     const std::wstring& path,
     void* buffer, size_t size, bool asImage,
-    eLoadFlags flags /*= NoFlags*/ ,
-	ptr_t forceMapToAddr
+    eLoadFlags flags /*= NoFlags*/ 
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -300,32 +296,15 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
         return status;
     }
 
-    // Check if already loaded
-	if (auto hMod = _process.modules().GetModule(path, (flags & ManualImports) ? ManualOnly : LdrList, pImage->peImage.mType()))
-	{
-		pImage->peImage.Release();
-		return hMod;
-	}
-
-	LoadData data;
-	if (_mapCallback != nullptr)
-	{
-		ModuleData tmpData;
-		tmpData.baseAddress = 0;
-		tmpData.manual = ((pImage->flags & ManualImports) != 0);
-		tmpData.fullPath = path;
-		tmpData.name = Utils::ToLower(Utils::StripPath(path));
-		tmpData.size = pImage->peImage.imageSize();
-		tmpData.type = pImage->peImage.mType();
-		tmpData.entryPoint = 0;
-		tmpData.ldrPtr = 0;
-		tmpData.imgPtr = pImage->imgMem.ptr();
-
-		data = _mapCallback(ImageCallback, _userContext, _process, tmpData);
-
-		if(data.forceMapToAddr)
-			forceMapToAddr = data.forceMapToAddr;
-	}
+    // Check if already loaded, but only if doesn't explicitly excluded
+    if (!(flags & ForceRemap))
+    {
+        if (auto hMod = _process.modules().GetModule( path, LdrList, pImage->peImage.mType() ))
+        {
+            pImage->peImage.Release();
+            return hMod;
+        }
+    }
 
     // Check architecture
     if (pImage->peImage.mType() == mt_mod32 && !_process.core().isWow64())
@@ -385,7 +364,7 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     // Allocate normally if something went wrong
     if (!pImage->imgMem.valid())
     {
-        auto mem = _process.memory().Allocate( pImage->peImage.imageSize(), (pImage->flags & NoExec) ? PAGE_READWRITE : PAGE_EXECUTE_READWRITE, pImage->peImage.imageBase() );
+        auto mem = _process.memory().Allocate( pImage->peImage.imageSize(), PAGE_EXECUTE_READWRITE, pImage->peImage.imageBase() );
         if (!mem)
         {
             BLACKBONE_TRACE( L"ManualMap: Failed to allocate memory for image, status 0x%X", status );
@@ -396,22 +375,8 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
         pImage->imgMem = std::move( mem.result() );
     }
 
-	pImage->forceMapTo = forceMapToAddr;
-
-	if (forceMapToAddr)
-	{
-		ldrEntry.baseAddress = forceMapToAddr;
-		ldrEntry.size = pImage->peImage.imageSize();
-		ldrEntry.entryPoint = pImage->peImage.entryPoint(forceMapToAddr);
-		ldrEntry.imgPtr = pImage->imgMem.ptr();
-	}
-	else
-	{
-		ldrEntry.baseAddress = pImage->imgMem.ptr();
-		ldrEntry.size = pImage->peImage.imageSize();
-		ldrEntry.entryPoint = pImage->peImage.entryPoint(ldrEntry.baseAddress);
-		ldrEntry.imgPtr = pImage->imgMem.ptr();
-	}
+    ldrEntry.baseAddress = pImage->imgMem.ptr();
+    ldrEntry.size = pImage->peImage.imageSize();
 
     BLACKBONE_TRACE( L"ManualMap: Image base allocated at 0x%016llx", pImage->imgMem.ptr() );
 
@@ -443,8 +408,14 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     }
 
     auto mt = ldrEntry.type;
-    auto pMod = _process.modules().AddManualModule( static_cast<ModuleData&>(ldrEntry) );
-    {
+	ModuleDataPtr pMod;
+
+    if (flags & ForceRemap)
+        pMod = std::make_shared<const ModuleData>( _process.modules().Canonicalize( ldrEntry, true ) );
+    else
+        pMod = _process.modules().AddManualModule( ldrEntry );
+
+	{
         // Handle x64 system32 dlls for wow64 process
         bool fsRedirect = !(flags & IsDependency) && mt == mt_mod64 && _process.barrier().sourceWow64;
 
@@ -468,15 +439,13 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     }
 
     // Apply proper memory protection for sections
-    if (!(flags & HideVAD) && !(flags & NoExec))
+    if (!(flags & HideVAD))
         ProtectImageMemory( pImage );
 
     // Make exception handling possible (C and C++)
     if (!(flags & NoExceptions))
     {
-        if (!NT_SUCCESS( status = EnableExceptions( pImage ) )
-			&& status != STATUS_NOT_FOUND
-			&& status != STATUS_INVALID_PARAMETER)
+        if (!NT_SUCCESS( status = EnableExceptions( pImage ) ) && status != STATUS_NOT_FOUND)
         {
             BLACKBONE_TRACE( L"ManualMap: Failed to enable exception handling for image %ls", ldrEntry.name.c_str() );
             pImage->peImage.Release();
@@ -495,7 +464,7 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
     }
 
     // Unlink image from VAD list
-    if ((flags & HideVAD) && !NT_SUCCESS( status = ConcealVad( pImage->imgMem ) ))
+    if (flags & HideVAD && !NT_SUCCESS( status = ConcealVad( pImage->imgMem ) ))
     {
         pImage->peImage.Release();
         _process.modules().RemoveManualModule( ldrEntry.name, mt );
@@ -507,7 +476,6 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapModule(
 
     // Create reference for native loader functions
     pImage->ldrEntry.flags = flags & CreateLdrRef ? Ldr_All : Ldr_None;
-
     if (_mapCallback != nullptr)
     {
         auto mapData = _mapCallback( PostCallback, _userContext, _process, *pMod );
@@ -558,8 +526,7 @@ NTSTATUS MMap::UnmapAllModules()
         BLACKBONE_TRACE( L"ManualMap: Unmapping image '%ls'", pImage->ldrEntry.name.c_str() );
 
         // Call main
-		if(!(pImage->flags & NoExec))
-		    RunModuleInitializers( pImage, DLL_PROCESS_DETACH );
+        RunModuleInitializers( pImage, DLL_PROCESS_DETACH );
 
         // Remove VEH
         if (!(pImage->flags & NoExceptions))
@@ -712,9 +679,6 @@ NTSTATUS MMap::RelocateImage( ImageContextPtr pImage )
     // Reloc delta
     ptr_t Delta = pImage->imgMem.ptr() - pImage->peImage.imageBase();
 
-	if(pImage->forceMapTo)
-		Delta = pImage->forceMapTo - pImage->peImage.imageBase();
-
     // No need to relocate
     if (Delta == 0)
     {
@@ -723,14 +687,11 @@ NTSTATUS MMap::RelocateImage( ImageContextPtr pImage )
     }
 
     // Dll can't be relocated
-	if (!pImage->peImage.isSys())
-	{
-		if (!(pImage->peImage.DllCharacteristics() & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
-		{
-			BLACKBONE_TRACE(L"ManualMap: Can't relocate image, no relocation flag");
-			return STATUS_INVALID_IMAGE_FORMAT;
-		}
-	}
+    if (!(pImage->peImage.DllCharacteristics() & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
+    {
+        BLACKBONE_TRACE( L"ManualMap: Can't relocate image, no relocation flag" );
+        return STATUS_INVALID_IMAGE_HASH;
+    }
 
     auto start = pImage->peImage.DirectoryAddress( IMAGE_DIRECTORY_ENTRY_BASERELOC );
     auto end = start + pImage->peImage.DirectorySize( IMAGE_DIRECTORY_ENTRY_BASERELOC );
@@ -790,9 +751,9 @@ NTSTATUS MMap::RelocateImage( ImageContextPtr pImage )
 
     // Apply relocations, skip header
     if (pImage->flags & HideVAD)
-        status = Driver().WriteMem( _process.pid(), pImage->imgMem.ptr() + 0x1000, pImage->ldrEntry.size - 0x1000, pLocal + 0x1000 );
+        status = Driver().WriteMem( _process.pid(), pImage->ldrEntry.baseAddress + 0x1000, pImage->ldrEntry.size - 0x1000, pLocal + 0x1000 );
     else
-        status = _process.memory().Write(pImage->imgMem.ptr() + 0x1000, pImage->ldrEntry.size - 0x1000, pLocal + 0x1000 );
+        status = _process.memory().Write( pImage->ldrEntry.baseAddress + 0x1000, pImage->ldrEntry.size - 0x1000, pLocal + 0x1000 );
 
     if (!NT_SUCCESS( status ))
     {
@@ -810,17 +771,14 @@ NTSTATUS MMap::RelocateImage( ImageContextPtr pImage )
 /// <returns></returns>
 call_result_t<ModuleDataPtr> MMap::FindOrMapDependency( ImageContextPtr pImage, std::wstring& path )
 {
-	// Already loaded
-	auto hMod = _process.modules().GetModule(path, (pImage->flags & ManualImports) ? ManualOnly : LdrList, pImage->peImage.mType(), pImage->ldrEntry.fullPath.c_str());
-	if (hMod)
-		return hMod;
+    // Already loaded
+    auto hMod = _process.modules().GetModule( path, LdrList, pImage->peImage.mType(), pImage->ldrEntry.fullPath.c_str() );
+    if (hMod)
+        return hMod;
 
     BLACKBONE_TRACE( L"ManualMap: Loading new dependency '%ls'", path.c_str() );
 
-    int flags = NameResolve::EnsureFullPath;
-
-	if (pImage->peImage.isSys())
-		flags |= NameResolve::KernelDriver;
+    auto flags = NameResolve::EnsureFullPath;
 
     // Wow64 fs redirection
     if (pImage->ldrEntry.type == mt_mod32 && !_process.barrier().sourceWow64)
@@ -831,7 +789,7 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapDependency( ImageContextPtr pImage, 
         path,
         pImage->ldrEntry.name, 
         basedir, 
-        (NameResolve::eResolveFlag)flags, 
+        flags, 
         _process, 
         pImage->peImage.actx() 
     );
@@ -860,9 +818,6 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapDependency( ImageContextPtr pImage, 
         tmpData.name = Utils::ToLower( Utils::StripPath( path ) );
         tmpData.size = 0;
         tmpData.type = pImage->ldrEntry.type;
-		tmpData.entryPoint = 0;
-		tmpData.ldrPtr = 0;
-		tmpData.imgPtr = 0;
 
         data = _mapCallback( PreCallback, _userContext, _process, tmpData );
     }
@@ -870,7 +825,7 @@ call_result_t<ModuleDataPtr> MMap::FindOrMapDependency( ImageContextPtr pImage, 
     // Loading method
     if (data.mtype == MT_Manual || (data.mtype == MT_Default && pImage->flags & ManualImports))
     {
-        return FindOrMapModule( path, nullptr, 0, false, pImage->flags | NoSxS | NoDelayLoad | PartialExcept | IsDependency, data.forceMapToAddr );
+        return FindOrMapModule( path, nullptr, 0, false, pImage->flags | NoSxS | NoDelayLoad | PartialExcept | IsDependency );
     }
     else if (data.mtype != MT_None)
     {
@@ -910,8 +865,7 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
         if (!hMod)
         {
             BLACKBONE_TRACE( L"ManualMap: Failed to load dependency '%ls'. Status 0x%x", wstrDll.c_str(), hMod.status );
-            //return hMod.status;
-			continue;
+            return hMod.status;
         }
 
         for (auto& importFn : importMod.second)
@@ -968,18 +922,13 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
                     );
                 }
 
-				//Allow unresolved import
-                //return expData.status;
-				continue;
+                return expData.status;
             }
 
-			if (expData.status == STATUS_SUCCESS)
-			{
-				if (pImage->ldrEntry.type == mt_mod64)
-					*reinterpret_cast<uint64_t*>(pLocal + importFn.ptrRVA) = expData->procAddress;
-				else
-					*reinterpret_cast<uint32_t*>(pLocal + importFn.ptrRVA) = static_cast<uint32_t>(expData->procAddress);
-			}
+            if (pImage->ldrEntry.type == mt_mod64)
+                *reinterpret_cast<uint64_t*>(pLocal + importFn.ptrRVA) = expData->procAddress;
+            else
+                *reinterpret_cast<uint32_t*>(pLocal + importFn.ptrRVA) = static_cast<uint32_t>(expData->procAddress);
         }
     }
 
@@ -990,7 +939,7 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
     {
         status = Driver().WriteMem(
             _process.pid(),
-			pImage->imgMem.ptr() + 0x1000,
+            pImage->ldrEntry.baseAddress + 0x1000,
             pImage->ldrEntry.size - 0x1000,
             pLocal + 0x1000
         );
@@ -998,7 +947,7 @@ NTSTATUS MMap::ResolveImport( ImageContextPtr pImage, bool useDelayed /*= false 
     else
     {
         status = _process.memory().Write(
-			pImage->imgMem.ptr() + 0x1000,
+            pImage->ldrEntry.baseAddress + 0x1000,
             pImage->ldrEntry.size - 0x1000,
             pLocal + 0x1000
         );
@@ -1162,12 +1111,7 @@ NTSTATUS MMap::InitializeCookie( ImageContextPtr pImage )
     GetSystemTimeAsFileTime( &systime );
     QueryPerformanceCounter( &PerformanceCount );
 
-	ptr_t cookie;
-	
-	if(_process.remote().getExecThread() != nullptr)
-		cookie = _process.pid() ^ _process.remote().getExecThread()->id() ^ reinterpret_cast<uintptr_t>(&cookie);
-	else
-		cookie = _process.pid() ^ GetCurrentThreadId() ^ reinterpret_cast<uintptr_t>(&cookie);
+    ptr_t cookie = _process.pid() ^ _process.remote().getExecThread()->id() ^ reinterpret_cast<uintptr_t>(&cookie);
 
     if (pImage->ldrEntry.type == mt_mod64)
     {
@@ -1467,7 +1411,7 @@ NTSTATUS MMap::ProbeRemoteSxS( std::wstring& path )
     auto memPtr = memBuf->ptr();
     auto fillStr = [&]( auto&& OriginalName )
     {
-        std::remove_reference<decltype(OriginalName)>::type DllName1 = { 0 };
+        std::remove_reference_t<decltype(OriginalName)> DllName1 = { 0 };
 
         OriginalName.Length = static_cast<uint16_t>(path.length() * sizeof( wchar_t ));
         OriginalName.MaximumLength = OriginalName.Length;

@@ -1,3 +1,4 @@
+
 # Prerequisites
 *.d
 
@@ -26,7 +27,13 @@
 *.a
 *.lib
 
-# Executables
+# Executables 
 *.exe
 *.out
 *.app
+  
+.vs/
+build/
+obj/
+x64/
+!Blackbone/**
