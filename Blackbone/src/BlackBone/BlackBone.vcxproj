@@ -860,10 +860,6 @@ xcopy "$(ProjectDir)..\..\DIA\$(Platform)\symsrv.dll" "$(TargetDir)" /Y</Command
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug(DLL)|Win32'">true</ExcludedFromBuild>
     </MASM>
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\3rd_party\DIA\lib\amd64\diaguids.lib" />
-    <Library Include="..\3rd_party\DIA\lib\diaguids.lib" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

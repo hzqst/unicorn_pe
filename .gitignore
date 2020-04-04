@@ -1,3 +1,11 @@
+# include
+#!Blackbone/**
+
+
+# sys
+*.sys
+
+
 # Prerequisites
 *.d
 
@@ -33,3 +41,7 @@
 /.vs/unicon_pre_2019build/v16/Browse.VC.db
 /.vs/unicorn_pe/v16
 /.vs/unicon_pre_2019build/v16
+/.vs/**
+
+
+!Blackbone/**
