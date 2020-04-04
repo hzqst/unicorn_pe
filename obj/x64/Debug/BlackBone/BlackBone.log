@@ -17,60 +17,60 @@
   x86inst.cpp
   x86operand.cpp
   x86operand_regs.cpp
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(62,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(63,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(64,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(65,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(75,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(78,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(80,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(81,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2332,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2333,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2342,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2343,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2344,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2345,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2360,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2384,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
   wow64ext.cpp
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2395,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2396,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2397,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2398,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2399,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2401,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2402,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2429,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2434,55): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2434,75): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2454,55): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2454,75): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
   AsmHelper32.cpp
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2483,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2485,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2486,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2487,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2488,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2489,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2491,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2492,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2521,78): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2577,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2578,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2590,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2591,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2592,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2593,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2596,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2598,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2599,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2600,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2601,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2602,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2603,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
-C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2604,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
   AsmHelper64.cpp
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(62,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(63,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(64,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(65,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(75,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(78,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(80,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(81,40): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2332,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2333,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2342,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2343,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2344,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2345,77): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2360,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2384,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2395,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2396,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2397,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2398,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2399,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2401,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2402,157): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2429,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2434,55): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2434,75): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2454,55): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2454,75): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2483,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2485,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2486,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2487,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2488,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2489,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2491,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2492,81): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2521,78): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2577,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2578,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2590,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2591,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2592,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2593,99): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2596,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2598,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2599,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2600,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2601,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2602,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2603,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
+C:\Users\Administrator\Desktop\new\Blackbone\src\3rd_party\AsmJit\x86\x86inst.cpp(2604,98): warning C5054: 运算符“|”: 已在不同类型的枚举之间弃用
   DriverControl.cpp
   LocalHookBase.cpp
   TraceHook.cpp
@@ -102,8 +102,8 @@ C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\3rd_party\AsmJ
   SymbolData.cpp
   SymbolLoader.cpp
   LDasm.c
-  BlackBone.vcxproj -> C:\Users\Administrator\Desktop\unicon_pre_2019build\build\x64\Debug\BlackBone.lib
-  C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\BlackBone\..\..\DIA\x64\msdia140.dll
+  BlackBone.vcxproj -> C:\Users\Administrator\Desktop\new\build\x64\Debug\BlackBone.lib
+  C:\Users\Administrator\Desktop\new\Blackbone\src\BlackBone\..\..\DIA\x64\msdia140.dll
   复制了 1 个文件
-  C:\Users\Administrator\Desktop\unicon_pre_2019build\Blackbone\src\BlackBone\..\..\DIA\x64\symsrv.dll
+  C:\Users\Administrator\Desktop\new\Blackbone\src\BlackBone\..\..\DIA\x64\symsrv.dll
   复制了 1 个文件
