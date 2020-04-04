@@ -499,4 +499,8 @@
   <ItemGroup>
     <None Include="Exports.def" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\3rd_party\DIA\lib\diaguids.lib" />
+    <Library Include="..\3rd_party\DIA\lib\amd64\diaguids.lib" />
+  </ItemGroup>
 </Project>
