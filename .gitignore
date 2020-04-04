@@ -27,14 +27,13 @@
 *.a
 *.lib
 
-# Executables
+# Executables 
 *.exe
 *.out
 *.app
-/.vs/unicon_pre_2019build/v16/Browse.VC.db
-/.vs/unicorn_pe/v16
-/.vs/unicon_pre_2019build/v16
-/.vs/**
-/build/
-/obj/
+
+.vs/
+build/
+obj/
+x64/
 !Blackbone/**
