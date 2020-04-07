@@ -777,11 +777,11 @@ void PeEmulation::InitProcessorState()
 	uc_reg_write(m_uc, UC_X86_REG_DS, &ds.all);
 
 	SegmentSelector ss = { 0 };
-	ds.fields.index = 2;
+	ss.fields.index = 2;
 	uc_reg_write(m_uc, UC_X86_REG_SS, &ss.all);
 
 	SegmentSelector es = { 0 };
-	ds.fields.index = 2;
+	es.fields.index = 2;
 	uc_reg_write(m_uc, UC_X86_REG_ES, &es.all);
 
 	SegmentSelector gs = { 0 };
