@@ -232,6 +232,12 @@ public:
     /// <returns>true if image is an *.exe</returns>
     BLACKBONE_API inline bool isExe() const { return _isExe; }
 
+	/// <summary>
+	/// Check if image is a sys file and not an exe or dll
+	/// </summary>
+	/// <returns>true if image is an *.sys</returns>
+	BLACKBONE_API inline bool isSys() const { return _subsystem == IMAGE_SUBSYSTEM_NATIVE; }
+
     /// <summary>
     /// Check if image is pure IL image
     /// </summary>
