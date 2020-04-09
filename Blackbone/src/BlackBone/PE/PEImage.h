@@ -233,7 +233,7 @@ public:
     BLACKBONE_API inline bool isExe() const { return _isExe; }
 
 	/// <summary>
-	/// Check if image is an executable file and not a sys
+	/// Check if image is a sys file and not an exe or dll
 	/// </summary>
 	/// <returns>true if image is an *.sys</returns>
 	BLACKBONE_API inline bool isSys() const { return _subsystem == IMAGE_SUBSYSTEM_NATIVE; }
