@@ -44,6 +44,11 @@ uint64_t EmuReadReturnAddress(uc_engine *uc);
 bool EmuReadNullTermUnicodeString(uc_engine *uc, uint64_t address, std::wstring &str);
 bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str);
 
+static ULONG64 ExtractEntryPoint(PVOID ModuleBase)
+{
+	return ULONG64(ModuleBase) + RtlImageNtHeader(ModuleBase)->OptionalHeader.AddressOfEntryPoint;
+}
+
 blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* context, blackbone::Process& /*process*/, const blackbone::ModuleData& modInfo)
 {
 	PeEmulation *ctx = (PeEmulation *)context;
@@ -57,7 +62,7 @@ blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* contex
 	}
 	else if (type == blackbone::PostCallback)
 	{
-		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.baseAddress, modInfo.size, modInfo.baseAddress, ((LDR_DATA_TABLE_ENTRY_BASE_T*)(modInfo.ldrPtr))->EntryPoint);
+		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.baseAddress, modInfo.size, modInfo.baseAddress, ExtractEntryPoint((PVOID)modInfo.baseAddress));
 	}
 
 	return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None);
@@ -1191,7 +1196,7 @@ int main(int argc, char **argv)
     // LDR_DATA_TABLE_ENTRY_BASE_T* p= MapResult.result()->
 	ctx.m_ImageBase = MapResult.result()->baseAddress;
 	ctx.m_ImageEnd = MapResult.result()->baseAddress + MapResult.result()->size;
-	ctx.m_ImageEntry =((LDR_DATA_TABLE_ENTRY_BASE_T*)(MapResult.result()->ldrPtr))->EntryPoint;
+	ctx.m_ImageEntry = ExtractEntryPoint((PVOID)ctx.m_ImageBase);
 	ctx.m_LastRipModule = ctx.m_ImageBase;
 	ctx.m_ExecuteFromRip = ctx.m_ImageEntry;
 
