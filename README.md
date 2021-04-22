@@ -2,7 +2,8 @@
 Unicorn PE is an [unicorn](https://github.com/unicorn-engine/unicorn) based instrumentation project/framework designed to emulate code execution for windows PE files, especially packed ones.
 
 ## Feature
-Dump PE image from emu-memory into file, fix import table, especially packed ones.
+
+Dump PE image from emu-memory into file, fix import table, decrypt VMProtect strings, decrypt VMProtect imports.
 
 Partial support for exception. (only #DB and #BP)
 
@@ -15,15 +16,15 @@ Update BlackBone to latest ver (2020.4.5).
 Feature: x86 (low priority) -- 0%
 
 ## Build
-Visual Studio 2019 are required.
+Visual Studio 2017 or 2019
 
-Open unicorn_pe.sln with Visual Studio 2019
+Open unicorn_pe.sln with Visual Studio
 
 Build project "unicorn_pe" as x64/Release or x64/Debug. (No x86 support for now)
 
 ## Usage
 
-unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm for displaying disasm]
+unicorn_pe (filename or filepath) [-k for kernel mode driver emulation] [-disasm for displaying disasm] [-dump for binary dump] [-packed for packed binary] [-boundcheck for memory access bound check, may slower the execution]
 
 ## Programming
 
