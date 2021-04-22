@@ -30,6 +30,9 @@
     <ClCompile Include="except.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="iat.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nativestructs.h">

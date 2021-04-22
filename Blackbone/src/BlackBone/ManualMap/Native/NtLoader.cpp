@@ -16,6 +16,10 @@ NtLdr::NtLdr( Process& proc )
 {
 }
 
+NtLdr::~NtLdr(void)
+{
+}
+
 /// <summary>
 /// Initialize some loader stuff
 /// </summary>
@@ -243,6 +247,8 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
     if (RtlInsertInvertedFunctionTable == 0 || LdrpInvertedFunctionTable == 0)
         return false;
 
+	auto imageBase = mod.imgPtr ? mod.imgPtr : mod.baseAddress;
+
     auto InsertP = [&]( auto table )
     {
         uint64_t result = 0;
@@ -251,17 +257,17 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
 
         memory.Read( LdrpInvertedFunctionTable, sizeof( table ), &table );
         for (ULONG i = 0; i < table.Count; i++)
-            if (table.Entries[i].ImageBase == mod.baseAddress)
+            if (table.Entries[i].ImageBase == imageBase)
                 return true;
 
         a->GenPrologue();
 
         if (IsWindows8Point1OrGreater())
-            a->GenCall( RtlInsertInvertedFunctionTable, { mod.baseAddress, mod.size }, cc_fastcall );
+            a->GenCall( RtlInsertInvertedFunctionTable, { imageBase, mod.size }, cc_fastcall );
         else if (IsWindows8OrGreater())
-            a->GenCall( RtlInsertInvertedFunctionTable, { mod.baseAddress, mod.size } );
+            a->GenCall( RtlInsertInvertedFunctionTable, { imageBase, mod.size } );
         else
-            a->GenCall( RtlInsertInvertedFunctionTable, { LdrpInvertedFunctionTable, mod.baseAddress, mod.size } );
+            a->GenCall( RtlInsertInvertedFunctionTable, { LdrpInvertedFunctionTable, imageBase, mod.size } );
 
         _process.remote().AddReturnWithEvent( *a );
         a->GenEpilogue();
@@ -271,12 +277,12 @@ bool NtLdr::InsertInvertedFunctionTable( NtLdrEntry& mod )
 
         for (DWORD i = 0; i < table.Count; i++)
         {
-            if (table.Entries[i].ImageBase != mod.baseAddress)
+            if (table.Entries[i].ImageBase != imageBase)
                 continue;
 
             // If Image has SAFESEH, RtlInsertInvertedFunctionTable is enough
-            if (table.Entries[i].SizeOfTable != 0)
-                return mod.safeSEH = true;
+			if (table.Entries[i].SizeOfTable != 0)
+				return mod.safeSEH = true;
 
             //
             // Create fake Exception directory
@@ -644,7 +650,7 @@ void NtLdr::InsertTailList( ptr_t ListHead, ptr_t Entry )
 /// <summary>
 /// Hash image name
 /// </summary>
-/// <param name="str">Image name</param>
+/// <param name="str">Iamge name</param>
 /// <returns>Hash</returns>
 ULONG NtLdr::HashString( const std::wstring& str )
 {
@@ -654,7 +660,7 @@ ULONG NtLdr::HashString( const std::wstring& str )
     {
         UNICODE_STRING ustr;
         SAFE_CALL( RtlInitUnicodeString, &ustr, str.c_str() );
-        SAFE_NATIVE_CALL( RtlHashUnicodeString, &ustr, BOOLEAN(TRUE), 0, &hash );
+        SAFE_NATIVE_CALL( RtlHashUnicodeString, &ustr, (BOOLEAN)TRUE, 0, &hash );
     }
     else
     {

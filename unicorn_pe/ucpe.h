@@ -2,6 +2,17 @@
 
 using api_emu_callback = std::function<bool(uc_engine *uc)>;
 
+using disasm_callback = std::function<bool(cs_insn *inst, uint64_t pAddress, size_t instLen, int instCount)>;
+
+typedef struct UCPE_CacheFile_s
+{
+	ULONG ImageSize;
+	ULONG HeapSize;
+	ULONG StackSize;
+	ULONG RealEntryPoint;
+	CONTEXT ContextAtRealEntryPoint;
+}UCPE_CacheFile_t;
+
 typedef struct FakeAPI_s
 {
 	FakeAPI_s(const char *n, uint64_t va) : ProcedureName(n), VirtualAddress(va) {
@@ -82,12 +93,15 @@ public:
 		m_IsWin64 = true;
 		m_IsPacked = false;
 		m_Dump = false;
-		m_TlsValue = -1;
+		m_HasCache = false;
+		m_Cache = false;
 		m_PebBase = 0;
 		m_PebEnd = 0;
 		m_TebBase = 0;
 		m_TebEnd = 0;
+		m_Win32LastError = 0;
 		m_DriverObjectBase = 0;
+		m_RegistryPathBase = 0;
 		m_PsLoadedModuleListBase = 0;
 		m_DriverLdrEntry = 0;
 		m_ExecCodeCount = 0;
@@ -117,10 +131,14 @@ public:
 		memcpy(m_RtlpUnwindOpSlotTable, slottable, sizeof(slottable));
 
 		m_ExecuteExceptionHandler = 0;
+		m_FakeAPICallEnabled = false;
+		m_LastFakeAPICall = NULL;
+		m_LastFakeAPICallReturnAddress = 0;
 	}
 
 	void InitProcessorState();
 	void InitTebPeb();
+	void InitCommandLine();
 	void InitKTHREAD();
 	void InitPsLoadedModuleList();
 	void InitDriverObject();
@@ -142,6 +160,8 @@ public:
 	NTSTATUS LdrLoadDllByName(const std::wstring &DllName, ULONG64 *ImageBase, ULONG *ImageSize);
 
 	bool RebuildSection(PVOID ImageBase, ULONG ImageSize, virtual_buffer_t &RebuildSectionBuffer);
+
+	void DisasmFunction(ULONG64 FunctionBegin, ULONG64 FunctionEnd, const disasm_callback &callback);
 
 	ULONG64 HeapAlloc(ULONG Bytes, bool IsPageAlign = false);
 	bool HeapFree(ULONG64 FreeAddress);
@@ -232,6 +252,8 @@ public:
 	bool m_IsPacked;
 	bool m_BoundCheck;
 	bool m_Dump;
+	bool m_Cache;
+	bool m_HasCache;
 
 	uint64_t m_KSharedUserDataBase;
 	uint64_t m_KSharedUserDataEnd;
@@ -250,29 +272,35 @@ public:
 	uint64_t m_PebEnd;
 	uint64_t m_TebBase;
 	uint64_t m_TebEnd;
+	uint32_t m_Win32LastError;
+	uint64_t m_CommandLineABase;
+	uint64_t m_CommandLineWBase;
 
 	//kernelmode only
 	uint64_t m_DriverObjectBase;
+	uint64_t m_RegistryPathBase;
 	uint64_t m_KThreadBase;
 	uint64_t m_PsLoadedModuleListBase;
 	uint64_t m_DriverLdrEntry;
-
 	std::vector<FakeModule_t *> m_FakeModules;
 	std::vector<AllocBlock_t> m_HeapAllocs;
 	std::vector<MemMapping_t> m_MemMappings;
 	int m_MainModuleIndex;
 	int m_LastHeapAllocBytes;
-	uint64_t m_TlsValue;
+	std::vector<uint64_t> m_TlsValue;
 	uint64_t m_LastRip;
 	uint64_t m_LastRipModule;
 	uint64_t m_ExecCodeCount;
 	uint64_t m_ExecuteFromRip;
 	NTSTATUS m_LastException;
-
+	bool m_FakeAPICallEnabled;
+	FakeAPI_t *m_LastFakeAPICall;
+	uint64_t m_LastFakeAPICallReturnAddress;
 	_CONTEXT m_InitReg;
 	INVERTED_FUNCTION_TABLE m_PsInvertedFunctionTable;
 	UCHAR m_RtlpUnwindOpSlotTable[11];
 	int m_ExecuteExceptionHandler;
+	std::string filename;
 };
 
 #define API_FUNCTION_SIZE 8

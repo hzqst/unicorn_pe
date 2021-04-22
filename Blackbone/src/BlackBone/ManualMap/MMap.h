@@ -100,14 +100,15 @@ enum eLoadFlags
     MapInHighMem    = 0x20,     // Try to map image in address space beyond 4GB limit
     RebaseProcess   = 0x40,     // If target image is an .exe file, process base address will be replaced with mapped module value
     NoThreads       = 0x80,     // Don't create new threads, use hijacking
-    ForceRemap      = 0x100,    // Force remapping module even if it's already loaded
 
-    NoExceptions    = 0x01000,  // Do not create custom exception handler
-    PartialExcept   = 0x02000,  // Only create Inverted function table, without VEH
-    NoDelayLoad     = 0x04000,  // Do not resolve delay import
-    NoSxS           = 0x08000,  // Do not apply SxS activation context
-    NoTLS           = 0x10000,  // Skip TLS initialization and don't execute TLS callbacks
-    IsDependency    = 0x20000,  // Module is a dependency
+    NoExceptions    = 0x01000,   // Do not create custom exception handler
+    PartialExcept   = 0x02000,   // Only create Inverted function table, without VEH
+    NoDelayLoad     = 0x04000,   // Do not resolve delay import
+    NoSxS           = 0x08000,   // Do not apply SxS activation context
+    NoTLS           = 0x10000,   // Skip TLS initialization and don't execute TLS callbacks
+    IsDependency    = 0x20000,   // Module is a dependency
+
+	NoExec = 0x40000,   // No execute
 };
 
 ENUM_OPS( eLoadFlags )
@@ -124,20 +125,23 @@ enum MappingType
 struct LoadData
 {
     MappingType mtype = MT_Default;
+	ptr_t forceMapToAddr = 0;
     enum LdrRefFlags ldrFlags = static_cast<enum LdrRefFlags>(0);
 
     LoadData() = default;
 
-    LoadData( MappingType mtype_, enum LdrRefFlags ldrFlags_ )
+    LoadData( MappingType mtype_, enum LdrRefFlags ldrFlags_ , ptr_t forceMapTo)
         : mtype( mtype_ )
-        , ldrFlags( ldrFlags_ ) { }
+        , ldrFlags( ldrFlags_ ), forceMapToAddr(forceMapTo){ }
 };
 
 // Image mapping callback
 enum CallbackType
 {
     PreCallback,        // Called before loading. Loading type is decided here
-    PostCallback        // Called after manual mapping, but before entry point invocation. Loader flags are decided here
+    PostCallback,        // Called after manual mapping, but before entry point invocation. Loader flags are decided here
+	ImageCallback,		// Called after actually reading image file, but before image loading.
+	ExceptTableCallback,
 };
 
 using MapCallback = LoadData( *)(CallbackType type, void* context, Process& process, const ModuleData& modInfo);
@@ -156,6 +160,7 @@ struct ImageContext
     vecPtr         tlsCallbacks;            // TLS callback routines
     ptr_t          pExpTableAddr = 0;       // Exception table address (amd64 only)
     eLoadFlags     flags = NoFlags;         // Image loader flags
+	ptr_t          forceMapTo = 0;				//force map to
     bool           initialized = false;     // Image entry point was called
 };
 
@@ -184,7 +189,8 @@ public:
         eLoadFlags flags = NoFlags,
         MapCallback mapCallback = nullptr,
         void* context = nullptr,
-        CustomArgs_t* pCustomArgs_t = nullptr
+        CustomArgs_t* pCustomArgs_t = nullptr,
+		ptr_t forceMapToAddr = 0
         );
 
     /// <summary>
@@ -203,7 +209,8 @@ public:
         eLoadFlags flags = NoFlags,
         MapCallback mapCallback = nullptr,
         void* context = nullptr,
-        CustomArgs_t* pCustomArgs_t = nullptr
+        CustomArgs_t* pCustomArgs_t = nullptr,
+		ptr_t forceMapToAddr = 0
         );
 
     /// <summary>
@@ -241,7 +248,8 @@ private:
         eLoadFlags flags = NoFlags,
         MapCallback ldrCallback = nullptr,
         void* ldrContext = nullptr,
-        CustomArgs_t* pCustomArgs_t = nullptr
+        CustomArgs_t* pCustomArgs_t = nullptr,
+		ptr_t forceMapToAddr = 0
         );
  
     /// <summary>
@@ -261,7 +269,8 @@ private:
     call_result_t<ModuleDataPtr> FindOrMapModule(
         const std::wstring& path,
         void* buffer, size_t size, bool asImage,
-        eLoadFlags flags = NoFlags
+        eLoadFlags flags = NoFlags,
+		ptr_t forceMapToAddr = 0
         );
 
     /// <summary>

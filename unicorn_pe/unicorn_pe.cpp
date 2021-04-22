@@ -44,9 +44,9 @@ uint64_t EmuReadReturnAddress(uc_engine *uc);
 bool EmuReadNullTermUnicodeString(uc_engine *uc, uint64_t address, std::wstring &str);
 bool EmuReadNullTermString(uc_engine *uc, uint64_t address, std::string &str);
 
-static ULONG64 ExtractEntryPoint(PVOID ModuleBase)
+static ULONG ExtractEntryPointRva(PVOID ModuleBase)
 {
-	return ULONG64(ModuleBase) + RtlImageNtHeader(ModuleBase)->OptionalHeader.AddressOfEntryPoint;
+	return RtlImageNtHeader(ModuleBase)->OptionalHeader.AddressOfEntryPoint;
 }
 
 blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* context, blackbone::Process& /*process*/, const blackbone::ModuleData& modInfo)
@@ -58,14 +58,15 @@ blackbone::LoadData ManualMapCallback(blackbone::CallbackType type, void* contex
 		uint64_t desiredNextLoadBase = PAGE_ALIGN_64k((uint64_t)ctx->m_LoadModuleBase + (uint64_t)modInfo.size + 0x10000ull);
 		ctx->m_LoadModuleBase = desiredNextLoadBase;
 
-		return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None);
+		return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None, ctx->m_LoadModuleBase);
 	}
 	else if (type == blackbone::PostCallback)
 	{
-		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.baseAddress, modInfo.size, modInfo.baseAddress, ExtractEntryPoint((PVOID)modInfo.baseAddress));
+		ctx->MapImageToEngine(modInfo.name, (PVOID)modInfo.imgPtr, modInfo.size, modInfo.baseAddress,
+			(ULONG64)modInfo.baseAddress + ExtractEntryPointRva((PVOID)modInfo.imgPtr));
 	}
 
-	return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None);
+	return blackbone::LoadData(blackbone::MT_Default, blackbone::Ldr_None, 0);
 };
 
 void PeEmulation::AddAPIEmulation(FakeAPI_t *r, void *callback, int argsCount)
@@ -1185,7 +1186,7 @@ int main(int argc, char **argv)
 	uc_mem_map(uc, ctx.m_HeapBase, ctx.m_HeapEnd - ctx.m_HeapBase, (ctx.m_IsKernel) ? UC_PROT_READ | UC_PROT_WRITE | UC_PROT_EXEC : UC_PROT_READ | UC_PROT_WRITE);
 
 	auto MapResult = ctx.thisProc.mmap().MapImage(wfilename,
-		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExceptions,
+		ManualImports | NoSxS | NoExceptions | NoDelayLoad | NoTLS | NoExceptions | NoExec,
 		ManualMapCallback, &ctx, 0);
 
 	if (!MapResult.success())
@@ -1196,7 +1197,7 @@ int main(int argc, char **argv)
     // LDR_DATA_TABLE_ENTRY_BASE_T* p= MapResult.result()->
 	ctx.m_ImageBase = MapResult.result()->baseAddress;
 	ctx.m_ImageEnd = MapResult.result()->baseAddress + MapResult.result()->size;
-	ctx.m_ImageEntry = ExtractEntryPoint((PVOID)ctx.m_ImageBase);
+	ctx.m_ImageEntry = ctx.m_ImageBase + ExtractEntryPointRva((PVOID)MapResult.result()->imgPtr);
 	ctx.m_LastRipModule = ctx.m_ImageBase;
 	ctx.m_ExecuteFromRip = ctx.m_ImageEntry;
 
@@ -1361,7 +1362,7 @@ int main(int argc, char **argv)
 			SectionHeader[i].SizeOfRawData = SectionHeader[i].Misc.VirtualSize;
 		}
 
-		//ctx.RebuildSection(imagebuf.GetBuffer(), (ULONG)(ctx.m_ImageEnd - ctx.m_ImageBase), RebuildSectionBuffer);
+		ctx.RebuildSection(imagebuf.GetBuffer(), (ULONG)(ctx.m_ImageEnd - ctx.m_ImageBase), RebuildSectionBuffer);
 
 		if (ctx.m_ImageRealEntry)
 			ntheader->OptionalHeader.AddressOfEntryPoint = (ULONG)(ctx.m_ImageRealEntry - ctx.m_ImageBase);

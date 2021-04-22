@@ -23,7 +23,7 @@
     <ProjectGuid>{70E8CB01-BCFA-4013-BE58-AF642296177C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>unicornpe</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -49,7 +49,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
@@ -159,7 +159,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\unicorn\msvc\x64\Release;..\Blackbone\build\x64\Release;..\capstone\msvc\x64\Release;..\x64\Release;..\build\x64\Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\unicorn\msvc\x64\Release;..\capstone\msvc\x64\Release;..\x64\Release;..\build\x64\Release</AdditionalLibraryDirectories>
       <AdditionalDependencies>unicorn_static.lib;BlackBone.lib;capstone.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -168,6 +168,7 @@
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="encode.cpp" />
     <ClCompile Include="except.cpp" />
+    <ClCompile Include="iat.cpp" />
     <ClCompile Include="unicorn_pe.cpp" />
   </ItemGroup>
   <ItemGroup>

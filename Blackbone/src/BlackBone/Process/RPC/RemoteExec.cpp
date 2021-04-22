@@ -19,6 +19,7 @@ RemoteExec::RemoteExec( Process& proc )
     , _hWaitEvent( NULL )
     , _apcPatched( false )
 {
+	_refcount = 0;
 }
 
 RemoteExec::~RemoteExec()
@@ -82,7 +83,7 @@ NTSTATUS RemoteExec::ExecInNewThread(
 
     a->GenCall( _userCode.ptr(), { } );
     (*a)->mov( (*a)->zdx, _userData.ptr() + INTRET_OFFSET );
-    (*a)->mov( asmjit::host::dword_ptr( (*a)->zdx ), (*a)->zax );
+    (*a)->mov( (*a)->zdx, (*a)->zax );
     a->GenEpilogue( switchMode, 4 );
     
     // Execute code in newly created thread
@@ -319,6 +320,8 @@ NTSTATUS RemoteExec::CreateRPCEnvironment( WorkerThreadMode mode /*= Worker_None
     DWORD thdID = GetTickCount();       // randomize thread id
     NTSTATUS status = STATUS_SUCCESS;
 
+	_refcount++;
+
     auto allocMem = [this]( auto& result, uint32_t size = 0x1000, DWORD prot = PAGE_EXECUTE_READWRITE ) -> NTSTATUS
     {
         if (!result.valid())
@@ -459,7 +462,7 @@ NTSTATUS RemoteExec::CreateAPCEvent( DWORD threadID )
     // Event name
     swprintf_s( pEventName, ARRAYSIZE( pEventName ), L"\\BaseNamedObjects\\_MMapEvent_0x%x_0x%x", threadID, GetTickCount() );
 
-    const wchar_t* szStringSecurityDis = L"S:(ML;;NW;;;LW)D:(A;;GA;;;S-1-15-2-1)(A;;GA;;;WD)";
+    wchar_t* szStringSecurityDis = L"S:(ML;;NW;;;LW)D:(A;;GA;;;S-1-15-2-1)(A;;GA;;;WD)";
     PSECURITY_DESCRIPTOR pDescriptor = nullptr;
     ConvertStringSecurityDescriptorToSecurityDescriptorW( szStringSecurityDis, SDDL_REVISION_1, &pDescriptor, NULL );
     auto guard = std::unique_ptr<void, decltype(&LocalFree)>( pDescriptor, &LocalFree );
@@ -673,13 +676,17 @@ void RemoteExec::TerminateWorker()
 /// </summary>
 void RemoteExec::reset()
 {
-    TerminateWorker();
+	--_refcount;
+	if (_refcount == 0)
+	{
+		TerminateWorker();
 
-    _userCode.Reset();
-    _userData.Reset();
-    _workerCode.Reset();
+		_userCode.Reset();
+		_userData.Reset();
+		_workerCode.Reset();
 
-    _apcPatched = false;
+		_apcPatched = false;
+	}
 }
 
 }
