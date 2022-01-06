@@ -329,7 +329,6 @@ void RemoteMemory::BuildGenericHookFn( OperationType opType )
     static int argc[] = { 6, 4, 10, 2 };
     static int allocIdx[] = { 1, 1, 2, 1 };
     static int sizeIdx[] = { 3, 2, 6, -1 };
-    static int testIdx[] = { 4, -1, -1, -1 };
 
     int hookDataOfs = sizeof( HookData ) * opType;
 

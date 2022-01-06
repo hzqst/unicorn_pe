@@ -53,9 +53,7 @@ Native::Native( HANDLE hProcess, bool x86OS /*= false*/ )
 
 /*
 */
-Native::~Native()
-{
-}
+Native::~Native() = default;
 
 /// <summary>
 /// Allocate virtual memory

@@ -339,10 +339,10 @@ DWORD RemoteHook::OnBreakpoint( const DEBUG_EVENT& DebugEv )
     // Prevent highest bit extension.
     ptr_t addr = (uintptr_t)DebugEv.u.Exception.ExceptionRecord.ExceptionAddress;
     ptr_t ip = 0, sp = 0;
-    Thread thd( DebugEv.dwThreadId, &_core );
 
     if (_hooks.count( addr ))
     {
+        Thread thd(DebugEv.dwThreadId, &_core);
         _CONTEXT64 ctx64;
         _CONTEXT32 ctx32;
         thd.GetContext( ctx64, CONTEXT64_FULL, true );
@@ -448,11 +448,10 @@ DWORD RemoteHook::OnSinglestep( const DEBUG_EVENT& DebugEv )
         std::vector<std::pair<ptr_t, ptr_t>> results;
         StackBacktrace( ip, sp, thd, results, 1 );
 
-        RemoteContext context( _memory, thd, ctx64, !results.empty() ? results.back().first : 0, _x64Target, _wordSize );
-
         // Execute user callback
         if(_hooks.count( addr ))
         {
+            RemoteContext context(_memory, thd, ctx64, !results.empty() ? results.back().first : 0, _x64Target, _wordSize);
             auto& hook = _hooks[addr];
             if (hook.onExecute.classFn.classPtr && hook.onExecute.classFn.ptr != nullptr)
                 hook.onExecute.classFn.ptr( hook.onExecute.classFn.classPtr, context );

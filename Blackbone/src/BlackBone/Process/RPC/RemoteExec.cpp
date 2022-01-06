@@ -379,13 +379,13 @@ NTSTATUS RemoteExec::CreateRPCEnvironment( WorkerThreadMode mode /*= Worker_None
 call_result_t<DWORD> RemoteExec::CreateWorkerThread()
 {
     auto a = AsmFactory::GetAssembler( _process.core().isWow64() );
-    asmjit::Label l_loop = (*a)->newLabel();
 
     //
     // Create execution thread
     //
     if(!_workerThread || !_workerThread->valid())
     {
+        asmjit::Label l_loop = (*a)->newLabel();
         /*if (_proc.barrier().type == wow_64_32)
         {
             a->SwitchTo64();

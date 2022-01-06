@@ -1,4 +1,4 @@
-﻿#include <unicorn/unicorn.h>
+#include <unicorn/unicorn.h>
 #include <capstone/capstone.h>
 #include <BlackBone/Process/Process.h>
 #include <BlackBone/ManualMap/MMap.h>
@@ -322,7 +322,7 @@ NTSTATUS PeEmulation::LdrFindDllByName(const std::wstring &DllName, ULONG64 *Ima
 		newDllName = L"NTOSKRNL.EXE";
 	}
 
-	if (newDllName.find(L".") == std::wstring::npos)
+	if (newDllName.find(L'.') == std::wstring::npos)
 	{
 		if(m_IsKernel)
 			newDllName += L".SYS";
@@ -1194,10 +1194,12 @@ int main(int argc, char **argv)
 		printf("failed to MapImage\n");
 		return 0;
 	}
-    // LDR_DATA_TABLE_ENTRY_BASE_T* p= MapResult.result()->
-	ctx.m_ImageBase = MapResult.result()->baseAddress;
-	ctx.m_ImageEnd = MapResult.result()->baseAddress + MapResult.result()->size;
-	ctx.m_ImageEntry = ctx.m_ImageBase + ExtractEntryPointRva((PVOID)MapResult.result()->imgPtr);
+
+	auto res = MapResult.result();
+    // LDR_DATA_TABLE_ENTRY_BASE_T* p = res->
+	ctx.m_ImageBase = res->baseAddress;
+	ctx.m_ImageEnd = res->baseAddress + res->size;
+	ctx.m_ImageEntry = ctx.m_ImageBase + ExtractEntryPointRva((PVOID)res->imgPtr);
 	ctx.m_LastRipModule = ctx.m_ImageBase;
 	ctx.m_ExecuteFromRip = ctx.m_ImageEntry;
 

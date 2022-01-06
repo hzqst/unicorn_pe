@@ -16,9 +16,7 @@ NtLdr::NtLdr( Process& proc )
 {
 }
 
-NtLdr::~NtLdr(void)
-{
-}
+NtLdr::~NtLdr(void) = default;
 
 /// <summary>
 /// Initialize some loader stuff

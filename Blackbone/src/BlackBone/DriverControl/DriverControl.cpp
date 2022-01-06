@@ -10,14 +10,12 @@ namespace blackbone
 
 #define DRIVER_SVC_NAME L"BlackBone"
 
-DriverControl::DriverControl()
-{
-}
+DriverControl::DriverControl() = default;
 
-DriverControl::~DriverControl()
-{
-    //Unload();
-}
+DriverControl::~DriverControl() = default;
+//{
+//    Unload();
+//}
 
 DriverControl& DriverControl::Instance()
 {
