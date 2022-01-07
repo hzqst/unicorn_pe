@@ -5,9 +5,7 @@ namespace blackbone
 std::unordered_map<void*, DetourBase*> DetourBase::_breakpoints;
 void* DetourBase::_vecHandler = nullptr;
 
-DetourBase::DetourBase()
-{
-}
+DetourBase::DetourBase() = default;
 
 DetourBase::~DetourBase()
 {

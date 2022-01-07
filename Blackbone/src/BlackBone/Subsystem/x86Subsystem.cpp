@@ -10,9 +10,7 @@ x86Native::x86Native( HANDLE hProcess )
 {
 }
 
-x86Native::~x86Native()
-{
-}
+x86Native::~x86Native() = default;
 
 /// <summary>
 /// Query virtual memory

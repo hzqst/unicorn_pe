@@ -31,9 +31,7 @@ public:
     {     
     }
 
-    BLACKBONE_API ~RemoteContext()
-    {
-    }
+    BLACKBONE_API ~RemoteContext() = default;
 
     // Native context
     BLACKBONE_API inline _CONTEXT64& native()

@@ -198,11 +198,12 @@ void PPC_printInst(MCInst *MI, SStream *O, void *Info)
 		mnem = printAliasInstr(MI, O, Info);
 
 	if (mnem != NULL) {
-		if (strlen(mnem) > 0) {
+		if (mnem[0] != '\0') {
 			struct ppc_alias alias;
+			uint64_t len = strlen(mnem);
 			// check to remove the last letter of ('.', '-', '+')
-			if (mnem[strlen(mnem) - 1] == '-' || mnem[strlen(mnem) - 1] == '+' || mnem[strlen(mnem) - 1] == '.')
-				mnem[strlen(mnem) - 1] = '\0';
+			if (mnem[len - 1] == '-' || mnem[len - 1] == '+' || mnem[len - 1] == '.')
+				mnem[len - 1] = '\0';
 
 			if (PPC_alias_insn(mnem, &alias)) {
 				MCInst_setOpcodePub(MI, alias.id);

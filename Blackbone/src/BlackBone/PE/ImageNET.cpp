@@ -11,9 +11,7 @@
 namespace blackbone
 {
 
-ImageNET::ImageNET( void )
-{
-}
+ImageNET::ImageNET(void) = default;
 
 ImageNET::~ImageNET(void)
 {

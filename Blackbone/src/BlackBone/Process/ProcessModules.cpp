@@ -28,9 +28,7 @@ ProcessModules::ProcessModules( class Process& proc )
 	
 }
 
-ProcessModules::~ProcessModules()
-{
-}
+ProcessModules::~ProcessModules() = default;
 
 /// <summary>
 /// Get module by name
@@ -336,14 +334,14 @@ call_result_t<exportData> ProcessModules::GetExport( const ModuleData& hMod, con
 
                     std::string chainExp( forwardStr );
 
-                    std::string strDll = chainExp.substr( 0, chainExp.find( "." ) ) + ".dll";
-                    std::string strName = chainExp.substr( chainExp.find( "." ) + 1, strName.npos );
+                    std::string strDll = chainExp.substr( 0, chainExp.find( '.' ) ) + ".dll";
+                    std::string strName = chainExp.substr( chainExp.find( '.' ) + 1, strName.npos);
                     std::wstring wDll( Utils::AnsiToWstring( strDll ) );
 
                     // Fill export data info
                     data.isForwarded = true;
                     data.forwardModule = wDll;
-                    data.forwardByOrd = (strName.find( "#" ) == 0);
+                    data.forwardByOrd = (strName.find( '#' ) == 0);
 
                     if (data.forwardByOrd)
                         data.forwardOrdinal = static_cast<WORD>(atoi( strName.c_str() + 1 ));
@@ -473,12 +471,12 @@ call_result_t<ModuleDataPtr> ProcessModules::Inject( const std::wstring& path, T
     // Patch LdrFindOrMapDll to enable kernel32.dll loading
     if (switchMode == ForceSwitch && !_ldrPatched && IsWindows7OrGreater() && !IsWindows8OrGreater())
     {
-        uint8_t patch[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
         auto patchBase = g_symbols.LdrKernel32PatchAddress;
 
         if (patchBase != 0)
         {
             DWORD flOld = 0;
+            uint8_t patch[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
             _memory.Protect( patchBase, sizeof( patch ), PAGE_EXECUTE_READWRITE, &flOld );
             _memory.Write( patchBase, sizeof( patch ), patch );
             _memory.Protect( patchBase, sizeof( patch ), flOld, nullptr );
@@ -664,7 +662,7 @@ bool ProcessModules::InjectPureIL(
     std::wstring MethodName = netAssemblyMethod.substr( idx + 1 );
     std::wstring tmp = netAssemblyMethod;
     tmp.erase( idx );
-    std::wstring ClassName = tmp;
+    std::wstring ClassName = std::move(tmp);
 
     auto mem = _memory.Allocate( 0x10000 );
     if (!mem)
