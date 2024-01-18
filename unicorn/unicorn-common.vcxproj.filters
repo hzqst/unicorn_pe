@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\glib_compat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\gtestutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\garray.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\gtree.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\grand.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\glist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\gmem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\gpattern.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\glib_compat\gslice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\bitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\bitops.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\crc32c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\cutils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\getauxval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\guest-random.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\host-utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\osdep.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\qdist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\qemu-timer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\qemu-timer-common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\range.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\qht.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\pagesize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\cacheinfo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\crypto\aes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\oslib-win32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\qemu-thread-win32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\qfrostwei\Desktop\unicorn\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\util\setjmp-wrapper-win32.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{E4BFB4DA-C556-392A-A93C-3F76E0B82B31}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

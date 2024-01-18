@@ -7,6 +7,48 @@ open System
 [<AutoOpen>]
 module X86 =
 
+    // X86 CPU
+
+    let UC_CPU_X86_QEMU64 = 0
+    let UC_CPU_X86_PHENOM = 1
+    let UC_CPU_X86_CORE2DUO = 2
+    let UC_CPU_X86_KVM64 = 3
+    let UC_CPU_X86_QEMU32 = 4
+    let UC_CPU_X86_KVM32 = 5
+    let UC_CPU_X86_COREDUO = 6
+    let UC_CPU_X86_486 = 7
+    let UC_CPU_X86_PENTIUM = 8
+    let UC_CPU_X86_PENTIUM2 = 9
+    let UC_CPU_X86_PENTIUM3 = 10
+    let UC_CPU_X86_ATHLON = 11
+    let UC_CPU_X86_N270 = 12
+    let UC_CPU_X86_CONROE = 13
+    let UC_CPU_X86_PENRYN = 14
+    let UC_CPU_X86_NEHALEM = 15
+    let UC_CPU_X86_WESTMERE = 16
+    let UC_CPU_X86_SANDYBRIDGE = 17
+    let UC_CPU_X86_IVYBRIDGE = 18
+    let UC_CPU_X86_HASWELL = 19
+    let UC_CPU_X86_BROADWELL = 20
+    let UC_CPU_X86_SKYLAKE_CLIENT = 21
+    let UC_CPU_X86_SKYLAKE_SERVER = 22
+    let UC_CPU_X86_CASCADELAKE_SERVER = 23
+    let UC_CPU_X86_COOPERLAKE = 24
+    let UC_CPU_X86_ICELAKE_CLIENT = 25
+    let UC_CPU_X86_ICELAKE_SERVER = 26
+    let UC_CPU_X86_DENVERTON = 27
+    let UC_CPU_X86_SNOWRIDGE = 28
+    let UC_CPU_X86_KNIGHTSMILL = 29
+    let UC_CPU_X86_OPTERON_G1 = 30
+    let UC_CPU_X86_OPTERON_G2 = 31
+    let UC_CPU_X86_OPTERON_G3 = 32
+    let UC_CPU_X86_OPTERON_G4 = 33
+    let UC_CPU_X86_OPTERON_G5 = 34
+    let UC_CPU_X86_EPYC = 35
+    let UC_CPU_X86_DHYANA = 36
+    let UC_CPU_X86_EPYC_ROME = 37
+    let UC_CPU_X86_ENDING = 38
+
     // X86 registers
 
     let UC_X86_REG_INVALID = 0
@@ -36,7 +78,6 @@ module X86 =
     let UC_X86_REG_EDX = 24
     let UC_X86_REG_EFLAGS = 25
     let UC_X86_REG_EIP = 26
-    let UC_X86_REG_EIZ = 27
     let UC_X86_REG_ES = 28
     let UC_X86_REG_ESI = 29
     let UC_X86_REG_ESP = 30
@@ -51,7 +92,6 @@ module X86 =
     let UC_X86_REG_RDI = 39
     let UC_X86_REG_RDX = 40
     let UC_X86_REG_RIP = 41
-    let UC_X86_REG_RIZ = 42
     let UC_X86_REG_RSI = 43
     let UC_X86_REG_RSP = 44
     let UC_X86_REG_SI = 45
@@ -64,17 +104,7 @@ module X86 =
     let UC_X86_REG_CR2 = 52
     let UC_X86_REG_CR3 = 53
     let UC_X86_REG_CR4 = 54
-    let UC_X86_REG_CR5 = 55
-    let UC_X86_REG_CR6 = 56
-    let UC_X86_REG_CR7 = 57
     let UC_X86_REG_CR8 = 58
-    let UC_X86_REG_CR9 = 59
-    let UC_X86_REG_CR10 = 60
-    let UC_X86_REG_CR11 = 61
-    let UC_X86_REG_CR12 = 62
-    let UC_X86_REG_CR13 = 63
-    let UC_X86_REG_CR14 = 64
-    let UC_X86_REG_CR15 = 65
     let UC_X86_REG_DR0 = 66
     let UC_X86_REG_DR1 = 67
     let UC_X86_REG_DR2 = 68
@@ -83,14 +113,6 @@ module X86 =
     let UC_X86_REG_DR5 = 71
     let UC_X86_REG_DR6 = 72
     let UC_X86_REG_DR7 = 73
-    let UC_X86_REG_DR8 = 74
-    let UC_X86_REG_DR9 = 75
-    let UC_X86_REG_DR10 = 76
-    let UC_X86_REG_DR11 = 77
-    let UC_X86_REG_DR12 = 78
-    let UC_X86_REG_DR13 = 79
-    let UC_X86_REG_DR14 = 80
-    let UC_X86_REG_DR15 = 81
     let UC_X86_REG_FP0 = 82
     let UC_X86_REG_FP1 = 83
     let UC_X86_REG_FP2 = 84
@@ -258,7 +280,17 @@ module X86 =
     let UC_X86_REG_FPCW = 246
     let UC_X86_REG_FPTAG = 247
     let UC_X86_REG_MSR = 248
-    let UC_X86_REG_ENDING = 249
+    let UC_X86_REG_MXCSR = 249
+    let UC_X86_REG_FS_BASE = 250
+    let UC_X86_REG_GS_BASE = 251
+    let UC_X86_REG_FLAGS = 252
+    let UC_X86_REG_RFLAGS = 253
+    let UC_X86_REG_FIP = 254
+    let UC_X86_REG_FCS = 255
+    let UC_X86_REG_FDP = 256
+    let UC_X86_REG_FDS = 257
+    let UC_X86_REG_FOP = 258
+    let UC_X86_REG_ENDING = 259
 
     // X86 instructions
 

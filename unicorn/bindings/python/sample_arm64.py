@@ -10,6 +10,9 @@ from unicorn.arm64_const import *
 # code to be emulated
 ARM64_CODE = b"\xab\x05\x00\xb8\xaf\x05\x40\x38" # str x11, [x13]; ldrb x15, [x13]
 
+# MSR code
+ARM64_MRS_CODE = b"\x62\xd0\x3b\xd5" # mrs        x2, tpidrro_el0
+
 # memory address where emulation starts
 ADDRESS    = 0x10000
 
@@ -45,7 +48,7 @@ def test_arm64():
         # tracing all basic blocks with customized callback
         mu.hook_add(UC_HOOK_BLOCK, hook_block)
 
-        # tracing all instructions with customized callback
+        # tracing one instruction with customized callback
         mu.hook_add(UC_HOOK_CODE, hook_code, begin=ADDRESS, end=ADDRESS)
 
         # emulate machine code in infinite time
@@ -64,5 +67,58 @@ def test_arm64():
         print("ERROR: %s" % e)
 
 
+def test_arm64_read_sctlr():
+    print("Read SCTLR_EL1")
+    try:
+        # Initialize emulator in ARM mode
+        mu = Uc(UC_ARCH_ARM64, UC_MODE_ARM)
+
+        # Read SCTLR_EL1
+        # crn = 1;
+        # crm = 0;
+        # op0 = 3;
+        # op1 = 0;
+        # op2 = 0;
+        val = mu.reg_read(UC_ARM64_REG_CP_REG, (1, 0, 3, 0, 0))
+        print(">>> SCTLR_EL1 = 0x%x" % val)
+
+    except UcError as e:
+        print("ERROR: %s" % e)
+
+def test_arm64_hook_mrs():
+    def _hook_mrs(uc, reg, cp_reg, _):
+        print(f">>> Hook MRS instruction: reg = 0x{reg:x}(UC_ARM64_REG_X2) cp_reg = {cp_reg}")
+        uc.reg_write(reg, 0x114514)
+        print(">>> Write 0x114514 to X")
+
+        # Skip MRS instruction
+        return True
+
+    print("Test hook MRS instruction")
+    try:
+        # Initialize emulator in ARM mode
+        mu = Uc(UC_ARCH_ARM64, UC_MODE_ARM)
+
+        # Map an area for code
+        mu.mem_map(0x1000, 0x1000)
+
+        # Write code
+        mu.mem_write(0x1000, ARM64_MRS_CODE)
+
+        # Hook MRS instruction
+        mu.hook_add(UC_HOOK_INSN, _hook_mrs, None, 1, 0, UC_ARM64_INS_MRS)
+
+        # Start emulation
+        mu.emu_start(0x1000, 0x1000 + len(ARM64_MRS_CODE))
+
+        print(f">>> X2 = {mu.reg_read(UC_ARM64_REG_X2):x}")
+
+    except UcError as e:
+        print("ERROR: %s" % e)
+
 if __name__ == '__main__':
     test_arm64()
+    print("=" * 26)
+    test_arm64_read_sctlr()
+    print("=" * 26)
+    test_arm64_hook_mrs()

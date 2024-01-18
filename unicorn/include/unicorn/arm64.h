@@ -12,8 +12,29 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-#pragma warning(disable:4201)
+#pragma warning(disable : 4201)
 #endif
+
+//> ARM64 CPU
+typedef enum uc_cpu_arm64 {
+    UC_CPU_ARM64_A57 = 0,
+    UC_CPU_ARM64_A53,
+    UC_CPU_ARM64_A72,
+    UC_CPU_ARM64_MAX,
+
+    UC_CPU_ARM64_ENDING
+} uc_cpu_arm64;
+
+// ARM64 coprocessor registers, use this with UC_ARM64_REG_CP_REG to
+// in call to uc_reg_write/read() to access the registers.
+typedef struct uc_arm64_cp_reg {
+    uint32_t crn; // Coprocessor register number
+    uint32_t crm; // Coprocessor register number
+    uint32_t op0; // Opcode0
+    uint32_t op1; // Opcode1
+    uint32_t op2; // Opcode2
+    uint64_t val; // The value to read/write
+} uc_arm64_cp_reg;
 
 //> ARM64 registers
 typedef enum uc_arm64_reg {
@@ -281,16 +302,59 @@ typedef enum uc_arm64_reg {
     UC_ARM64_REG_V31,
 
     //> pseudo registers
-    UC_ARM64_REG_PC,			// program counter register
+    UC_ARM64_REG_PC, // program counter register
 
     UC_ARM64_REG_CPACR_EL1,
 
-    //> thread registers
+    //> thread registers, depreciated, use UC_ARM64_REG_CP_REG instead
     UC_ARM64_REG_TPIDR_EL0,
     UC_ARM64_REG_TPIDRRO_EL0,
     UC_ARM64_REG_TPIDR_EL1,
-    
-    UC_ARM64_REG_ENDING,		// <-- mark the end of the list of registers
+
+    UC_ARM64_REG_PSTATE,
+
+    //> exception link registers, depreciated, use UC_ARM64_REG_CP_REG instead
+    UC_ARM64_REG_ELR_EL0,
+    UC_ARM64_REG_ELR_EL1,
+    UC_ARM64_REG_ELR_EL2,
+    UC_ARM64_REG_ELR_EL3,
+
+    //> stack pointers registers, depreciated, use UC_ARM64_REG_CP_REG instead
+    UC_ARM64_REG_SP_EL0,
+    UC_ARM64_REG_SP_EL1,
+    UC_ARM64_REG_SP_EL2,
+    UC_ARM64_REG_SP_EL3,
+
+    //> other CP15 registers, depreciated, use UC_ARM64_REG_CP_REG instead
+    UC_ARM64_REG_TTBR0_EL1,
+    UC_ARM64_REG_TTBR1_EL1,
+
+    UC_ARM64_REG_ESR_EL0,
+    UC_ARM64_REG_ESR_EL1,
+    UC_ARM64_REG_ESR_EL2,
+    UC_ARM64_REG_ESR_EL3,
+
+    UC_ARM64_REG_FAR_EL0,
+    UC_ARM64_REG_FAR_EL1,
+    UC_ARM64_REG_FAR_EL2,
+    UC_ARM64_REG_FAR_EL3,
+
+    UC_ARM64_REG_PAR_EL1,
+
+    UC_ARM64_REG_MAIR_EL1,
+
+    UC_ARM64_REG_VBAR_EL0,
+    UC_ARM64_REG_VBAR_EL1,
+    UC_ARM64_REG_VBAR_EL2,
+    UC_ARM64_REG_VBAR_EL3,
+
+    UC_ARM64_REG_CP_REG,
+
+    //> floating point control and status registers
+    UC_ARM64_REG_FPCR,
+    UC_ARM64_REG_FPSR,
+
+    UC_ARM64_REG_ENDING, // <-- mark the end of the list of registers
 
     //> alias registers
 
@@ -299,6 +363,28 @@ typedef enum uc_arm64_reg {
     UC_ARM64_REG_FP = UC_ARM64_REG_X29,
     UC_ARM64_REG_LR = UC_ARM64_REG_X30,
 } uc_arm64_reg;
+
+// Callback function for tracing MRS/MSR/SYS/SYSL. If this callback returns
+// true, the read/write to system registers would be skipped (even though it may
+// cause exceptions!). Note one callback per instruction is allowed.
+// @reg: The source/destination register.
+// @cp_reg: The source/destincation system register.
+// @user_data: The user data.
+typedef uint32_t (*uc_cb_insn_sys_t)(uc_engine *uc, uc_arm64_reg reg,
+                                     const uc_arm64_cp_reg *cp_reg,
+                                     void *user_data);
+
+//> ARM64 instructions
+typedef enum uc_arm64_insn {
+    UC_ARM64_INS_INVALID = 0,
+
+    UC_ARM64_INS_MRS,
+    UC_ARM64_INS_MSR,
+    UC_ARM64_INS_SYS,
+    UC_ARM64_INS_SYSL,
+
+    UC_ARM64_INS_ENDING
+} uc_arm64_insn;
 
 #ifdef __cplusplus
 }

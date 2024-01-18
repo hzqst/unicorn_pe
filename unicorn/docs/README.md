@@ -11,3 +11,7 @@ Documention of Unicorn engine.
 * Compare Unicorn & QEMU
 
 	http://unicorn-engine.org/docs/beyond_qemu.html
+
+* Uncorn-Engine Documentation
+
+	https://github.com/kabeor/Unicorn-Engine-Documentation

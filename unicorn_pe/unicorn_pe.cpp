@@ -20,6 +20,7 @@ using namespace blackbone;
 
 #pragma comment(lib,"ntdll.lib")
 
+
 std::ostream *outs;
 
 extern "C"
@@ -458,7 +459,12 @@ static void CodeCallback(uc_engine *uc, uint64_t address, uint32_t size, void *u
 
 	if (ctx->m_DisplayDisasm)
 	{
-		unsigned char codeBuffer[15];
+		unsigned char codeBuffer[64];
+		if (size > sizeof(codeBuffer))
+		{
+			*outs << "[-] CodeCallback code size error : " << size << "\n";
+			// __debugbreak();
+		}
 		uc_mem_read(uc, address, codeBuffer, size);
 
 		cs_insn insn;
@@ -468,7 +474,7 @@ static void CodeCallback(uc_engine *uc, uint64_t address, uint32_t size, void *u
 		uint8_t *code = codeBuffer;
 		size_t codeSize = size;
 		cs_disasm_iter(ctx->m_cs, (const uint8_t **)&code, &codeSize, &virtualBase, &insn);
-
+		
 		*outs << std::hex << address << "\t\t\t" << insn.mnemonic << "\t\t" << insn.op_str << "\n";
 	}
 
