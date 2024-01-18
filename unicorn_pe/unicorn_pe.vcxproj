@@ -117,8 +117,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\unicorn\msvc\x64\Debug;..\Blackbone\build\x64\Debug;..\capstone\msvc\x64\Debug;..\x64\Debug;..\build\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>unicorn_static.lib;BlackBone.lib;capstone.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\Blackbone\build\x64\Debug;..\capstone\msvc\x64\Debug;..\x64\Debug;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>unicorn_static.lib;x86_64-softmmu.lib;unicorn-common.lib;BlackBone.lib;capstone.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -4,6 +4,48 @@ package unicorn;
 
 public interface X86Const {
 
+// X86 CPU
+
+   public static final int UC_CPU_X86_QEMU64 = 0;
+   public static final int UC_CPU_X86_PHENOM = 1;
+   public static final int UC_CPU_X86_CORE2DUO = 2;
+   public static final int UC_CPU_X86_KVM64 = 3;
+   public static final int UC_CPU_X86_QEMU32 = 4;
+   public static final int UC_CPU_X86_KVM32 = 5;
+   public static final int UC_CPU_X86_COREDUO = 6;
+   public static final int UC_CPU_X86_486 = 7;
+   public static final int UC_CPU_X86_PENTIUM = 8;
+   public static final int UC_CPU_X86_PENTIUM2 = 9;
+   public static final int UC_CPU_X86_PENTIUM3 = 10;
+   public static final int UC_CPU_X86_ATHLON = 11;
+   public static final int UC_CPU_X86_N270 = 12;
+   public static final int UC_CPU_X86_CONROE = 13;
+   public static final int UC_CPU_X86_PENRYN = 14;
+   public static final int UC_CPU_X86_NEHALEM = 15;
+   public static final int UC_CPU_X86_WESTMERE = 16;
+   public static final int UC_CPU_X86_SANDYBRIDGE = 17;
+   public static final int UC_CPU_X86_IVYBRIDGE = 18;
+   public static final int UC_CPU_X86_HASWELL = 19;
+   public static final int UC_CPU_X86_BROADWELL = 20;
+   public static final int UC_CPU_X86_SKYLAKE_CLIENT = 21;
+   public static final int UC_CPU_X86_SKYLAKE_SERVER = 22;
+   public static final int UC_CPU_X86_CASCADELAKE_SERVER = 23;
+   public static final int UC_CPU_X86_COOPERLAKE = 24;
+   public static final int UC_CPU_X86_ICELAKE_CLIENT = 25;
+   public static final int UC_CPU_X86_ICELAKE_SERVER = 26;
+   public static final int UC_CPU_X86_DENVERTON = 27;
+   public static final int UC_CPU_X86_SNOWRIDGE = 28;
+   public static final int UC_CPU_X86_KNIGHTSMILL = 29;
+   public static final int UC_CPU_X86_OPTERON_G1 = 30;
+   public static final int UC_CPU_X86_OPTERON_G2 = 31;
+   public static final int UC_CPU_X86_OPTERON_G3 = 32;
+   public static final int UC_CPU_X86_OPTERON_G4 = 33;
+   public static final int UC_CPU_X86_OPTERON_G5 = 34;
+   public static final int UC_CPU_X86_EPYC = 35;
+   public static final int UC_CPU_X86_DHYANA = 36;
+   public static final int UC_CPU_X86_EPYC_ROME = 37;
+   public static final int UC_CPU_X86_ENDING = 38;
+
 // X86 registers
 
    public static final int UC_X86_REG_INVALID = 0;
@@ -33,7 +75,6 @@ public interface X86Const {
    public static final int UC_X86_REG_EDX = 24;
    public static final int UC_X86_REG_EFLAGS = 25;
    public static final int UC_X86_REG_EIP = 26;
-   public static final int UC_X86_REG_EIZ = 27;
    public static final int UC_X86_REG_ES = 28;
    public static final int UC_X86_REG_ESI = 29;
    public static final int UC_X86_REG_ESP = 30;
@@ -48,7 +89,6 @@ public interface X86Const {
    public static final int UC_X86_REG_RDI = 39;
    public static final int UC_X86_REG_RDX = 40;
    public static final int UC_X86_REG_RIP = 41;
-   public static final int UC_X86_REG_RIZ = 42;
    public static final int UC_X86_REG_RSI = 43;
    public static final int UC_X86_REG_RSP = 44;
    public static final int UC_X86_REG_SI = 45;
@@ -61,17 +101,7 @@ public interface X86Const {
    public static final int UC_X86_REG_CR2 = 52;
    public static final int UC_X86_REG_CR3 = 53;
    public static final int UC_X86_REG_CR4 = 54;
-   public static final int UC_X86_REG_CR5 = 55;
-   public static final int UC_X86_REG_CR6 = 56;
-   public static final int UC_X86_REG_CR7 = 57;
    public static final int UC_X86_REG_CR8 = 58;
-   public static final int UC_X86_REG_CR9 = 59;
-   public static final int UC_X86_REG_CR10 = 60;
-   public static final int UC_X86_REG_CR11 = 61;
-   public static final int UC_X86_REG_CR12 = 62;
-   public static final int UC_X86_REG_CR13 = 63;
-   public static final int UC_X86_REG_CR14 = 64;
-   public static final int UC_X86_REG_CR15 = 65;
    public static final int UC_X86_REG_DR0 = 66;
    public static final int UC_X86_REG_DR1 = 67;
    public static final int UC_X86_REG_DR2 = 68;
@@ -80,14 +110,6 @@ public interface X86Const {
    public static final int UC_X86_REG_DR5 = 71;
    public static final int UC_X86_REG_DR6 = 72;
    public static final int UC_X86_REG_DR7 = 73;
-   public static final int UC_X86_REG_DR8 = 74;
-   public static final int UC_X86_REG_DR9 = 75;
-   public static final int UC_X86_REG_DR10 = 76;
-   public static final int UC_X86_REG_DR11 = 77;
-   public static final int UC_X86_REG_DR12 = 78;
-   public static final int UC_X86_REG_DR13 = 79;
-   public static final int UC_X86_REG_DR14 = 80;
-   public static final int UC_X86_REG_DR15 = 81;
    public static final int UC_X86_REG_FP0 = 82;
    public static final int UC_X86_REG_FP1 = 83;
    public static final int UC_X86_REG_FP2 = 84;
@@ -255,7 +277,17 @@ public interface X86Const {
    public static final int UC_X86_REG_FPCW = 246;
    public static final int UC_X86_REG_FPTAG = 247;
    public static final int UC_X86_REG_MSR = 248;
-   public static final int UC_X86_REG_ENDING = 249;
+   public static final int UC_X86_REG_MXCSR = 249;
+   public static final int UC_X86_REG_FS_BASE = 250;
+   public static final int UC_X86_REG_GS_BASE = 251;
+   public static final int UC_X86_REG_FLAGS = 252;
+   public static final int UC_X86_REG_RFLAGS = 253;
+   public static final int UC_X86_REG_FIP = 254;
+   public static final int UC_X86_REG_FCS = 255;
+   public static final int UC_X86_REG_FDP = 256;
+   public static final int UC_X86_REG_FDS = 257;
+   public static final int UC_X86_REG_FOP = 258;
+   public static final int UC_X86_REG_ENDING = 259;
 
 // X86 instructions
 
