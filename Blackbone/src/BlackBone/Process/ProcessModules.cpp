@@ -16,7 +16,8 @@
 #endif
 
 #include <3rd_party/VersionApi.h>
-
+#include <string>
+#include <iterator>
 namespace blackbone
 {
 ProcessModules::ProcessModules( class Process& proc )
