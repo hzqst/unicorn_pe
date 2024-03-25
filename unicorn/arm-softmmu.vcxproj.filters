@@ -1,111 +1,111 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\exec.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\exec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\exec-vary.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\exec-vary.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\softmmu\cpus.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\softmmu\cpus.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\softmmu\ioport.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\softmmu\ioport.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\softmmu\memory.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\softmmu\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\softmmu\memory_mapping.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\softmmu\memory_mapping.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\fpu\softfloat.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\fpu\softfloat.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\tcg\optimize.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\tcg\optimize.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\tcg\tcg.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\tcg\tcg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\tcg\tcg-op.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\tcg\tcg-op.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\tcg\tcg-op-gvec.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\tcg\tcg-op-gvec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\tcg\tcg-op-vec.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\tcg\tcg-op-vec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\cpu-exec.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\cpu-exec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\cpu-exec-common.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\cpu-exec-common.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\cputlb.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\cputlb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\tcg-all.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\tcg-all.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\tcg-runtime.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\tcg-runtime.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\tcg-runtime-gvec.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\tcg-runtime-gvec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\translate-all.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\translate-all.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\accel\tcg\translator.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\accel\tcg\translator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\cpu.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\cpu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\crypto_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\crypto_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\debug_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\debug_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\iwmmxt_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\iwmmxt_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\m_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\m_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\neon_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\neon_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\op_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\op_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\psci.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\psci.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\tlb_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\tlb_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\translate.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\translate.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\vec_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\vec_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\vfp_helper.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\vfp_helper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\qemu\target\arm\unicorn_arm.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\qemu\target\arm\unicorn_arm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\qfrostwei\Desktop\unicorn\CMakeLists.txt" />
+    <CustomBuild Include="$(SolutionDir)\unicorn\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
