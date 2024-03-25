@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\qfrostwei\Desktop\unicorn\tests\unit\test_x86.c">
+    <ClCompile Include="$(SolutionDir)\unicorn\tests\unit\test_x86.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\qfrostwei\Desktop\unicorn\CMakeLists.txt" />
+    <CustomBuild Include="$(SolutionDir)\unicorn\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
