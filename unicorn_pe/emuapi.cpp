@@ -272,9 +272,6 @@ void EmuInitializeCriticalSectionEx(uc_engine *uc, uint64_t address, uint32_t si
 	uint32_t edx;
 	err = uc_reg_read(uc, UC_X86_REG_EDX, &edx);
 
-	uint32_t r8d;
-	err = uc_reg_read(uc, UC_X86_REG_R8D, &r8d);
-
 	RTL_CRITICAL_SECTION_64 CrtSection;
 	CrtSection.DebugInfo = 0;
 	CrtSection.LockCount = 0;
